@@ -72,18 +72,23 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
         testID="dashboard-scroll"
       >
-        {/* -------------------------------- HERO -------------------------------- */}
+        {/* -------------------------------- HERO (TOP 1% CONTRAST) ------------------------------- */}
         <View style={styles.heroCard}>
           <LinearGradient
             colors={Colors.gradients.hero as [string, string, string]}
             style={styles.heroGradient}
           >
+            {/* Premium dark veil to force readability */}
+            <View style={styles.heroVeil} />
+
             <View style={styles.heroHeader}>
               <View style={{ flex: 1, paddingRight: 12 }}>
                 <Text style={styles.heroLabel}>TEIN UCC</Text>
+
                 <Text style={styles.heroTitle} numberOfLines={1}>
                   {fullName}
                 </Text>
+
                 <Text style={styles.heroSub} numberOfLines={1}>
                   Level {profile?.level ?? "-"} · {profile?.program ?? "Program"}
                 </Text>
@@ -130,6 +135,7 @@ export default function DashboardScreen() {
                   {profile?.volunteerHours ?? 0}h
                 </Text>
               </View>
+
               <View style={styles.footerCol}>
                 <Text style={styles.footerLabel}>Badges</Text>
                 <Text style={styles.footerValue} numberOfLines={1}>
@@ -146,40 +152,29 @@ export default function DashboardScreen() {
             style={styles.quickCard}
             testID="assistant-entry"
             onPress={() => router.push("/assistant" as any)}
-            accessibilityRole="button"
-            accessibilityLabel="Open TEIN Assistant"
           >
             <View style={styles.quickIconWrap}>
               <Bot color={Colors.palette.crimson} />
             </View>
-
             <View style={styles.quickTextWrap}>
               <Text style={styles.quickTitle}>Ask TEIN AI</Text>
               <Text style={styles.quickSubtitle}>Policy explainers in 30s</Text>
             </View>
-
             <View style={styles.roundButton}>
               <ArrowRight color={Colors.ui.textPrimary} size={18} />
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.quickCard}
-            accessibilityRole="button"
-            accessibilityLabel="Pay dues"
-            testID="pay-dues-entry"
-          >
+          <TouchableOpacity style={styles.quickCard}>
             <View style={styles.quickIconWrap}>
               <CreditCard color={Colors.palette.crimson} />
             </View>
-
             <View style={styles.quickTextWrap}>
               <Text style={styles.quickTitle}>Pay Dues</Text>
               <Text style={styles.quickSubtitle}>
                 {firstPayment?.amount ?? "—"} settled
               </Text>
             </View>
-
             <View style={styles.roundButton}>
               <Sparkles color={Colors.ui.textPrimary} size={18} />
             </View>
@@ -197,14 +192,12 @@ export default function DashboardScreen() {
             <EmptyBlock text="No announcements yet. Check back soon." />
           ) : (
             announcements.map((item) => (
-              <View key={item.id} style={styles.feedCard} testID={`feed-${item.id}`}>
+              <View key={item.id} style={styles.feedCard}>
                 <View style={styles.feedHeader}>
-                  <Text style={styles.feedCategory} numberOfLines={1}>
+                  <Text style={styles.feedCategory}>
                     {(item.category ?? "").toUpperCase()}
                   </Text>
-                  <Text style={styles.feedTime} numberOfLines={1}>
-                    {item.timestamp}
-                  </Text>
+                  <Text style={styles.feedTime}>{item.timestamp}</Text>
                 </View>
 
                 <Text style={styles.feedTitle} numberOfLines={2}>
@@ -217,9 +210,7 @@ export default function DashboardScreen() {
                 <View style={styles.feedTagsRow}>
                   {(item.facultyTags ?? []).map((tag) => (
                     <View key={`${item.id}-${tag}`} style={styles.feedTag}>
-                      <Text style={styles.feedTagText} numberOfLines={1}>
-                        {tag}
-                      </Text>
+                      <Text style={styles.feedTagText}>{tag}</Text>
                     </View>
                   ))}
                 </View>
@@ -249,7 +240,7 @@ export default function DashboardScreen() {
             >
               {opps.map((opp) => (
                 <View key={opp.id} style={styles.opportunityCard}>
-                  <Text style={styles.opportunityType} numberOfLines={1}>
+                  <Text style={styles.opportunityType}>
                     {(opp.type ?? "").toUpperCase()}
                   </Text>
                   <Text style={styles.opportunityTitle} numberOfLines={2}>
@@ -267,7 +258,7 @@ export default function DashboardScreen() {
                     ))}
                   </View>
 
-                  <Text style={styles.opportunityDeadline} numberOfLines={1}>
+                  <Text style={styles.opportunityDeadline}>
                     Deadline: {opp.deadline}
                   </Text>
                 </View>
@@ -305,11 +296,7 @@ export default function DashboardScreen() {
           {mediaItems.length === 0 ? (
             <EmptyBlock text="Media uploads will appear here." />
           ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 2 }}
-            >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {mediaItems.map((item) => (
                 <View key={item.id} style={styles.mediaCard}>
                   <Image source={{ uri: item.thumbnail }} style={styles.mediaImage} />
@@ -348,9 +335,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.ui.background,
   },
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   content: {
     padding: 16,
     paddingBottom: 64,
@@ -368,41 +353,57 @@ const styles = StyleSheet.create({
     padding: 22,
     borderRadius: 24,
     gap: 8,
+    position: "relative",
   },
+
+  // NEW: Premium dark veil for contrast
+  heroVeil: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
+
   heroHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    zIndex: 2,
   },
   heroLabel: {
-    color: Colors.palette.ocean,
+    color: Colors.palette.ivory,
     fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1.2,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+    opacity: 0.95,
   },
   heroTitle: {
     color: Colors.palette.ivory,
     fontSize: 26,
-    fontWeight: "800",
+    fontWeight: "900",
     marginTop: 4,
+    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
   },
   heroSub: {
     color: Colors.palette.ivory,
     fontSize: 14,
-    opacity: 0.85,
+    opacity: 0.92,
+    marginTop: 2,
   },
+
   roleChip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
+    borderColor: "rgba(255,255,255,0.28)",
+    zIndex: 2,
   },
   roleChipText: {
     color: Colors.palette.ivory,
-    fontWeight: "800",
+    fontWeight: "900",
     fontSize: 12,
-    letterSpacing: 0.6,
+    letterSpacing: 0.7,
   },
 
   heroBody: {
@@ -411,6 +412,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
     alignItems: "center",
     gap: 16,
+    zIndex: 2,
   },
   heroMetaCol: {
     flex: 1,
@@ -418,20 +420,18 @@ const styles = StyleSheet.create({
   },
   metaLabel: {
     color: Colors.palette.ivory,
-    opacity: 0.7,
+    opacity: 0.85,
     fontSize: 12,
+    fontWeight: "700",
   },
   metaValue: {
     color: Colors.palette.ivory,
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
-  success: {
-    color: Colors.ui.success,
-  },
-  warning: {
-    color: Colors.ui.warning,
-  },
+  success: { color: Colors.ui.success },
+  warning: { color: Colors.ui.warning },
+
   pointsValue: {
     color: Colors.palette.ivory,
     fontSize: 34,
@@ -445,17 +445,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 4,
-    backgroundColor: "rgba(255,255,255,0.10)",
+    backgroundColor: "rgba(255,255,255,0.12)",
     padding: 8,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: "rgba(255,255,255,0.18)",
+    zIndex: 2,
   },
   qrPixel: {
     width: 16,
     height: 16,
     borderRadius: 4,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(255,255,255,0.10)",
   },
   qrPixelActive: {
     backgroundColor: Colors.palette.ivory,
@@ -465,28 +466,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 16,
+    zIndex: 2,
   },
-  footerCol: {
-    flex: 1,
-    paddingRight: 8,
-  },
+  footerCol: { flex: 1, paddingRight: 8 },
   footerLabel: {
     color: Colors.palette.ivory,
-    opacity: 0.7,
+    opacity: 0.85,
     fontSize: 12,
+    fontWeight: "700",
   },
   footerValue: {
     color: Colors.palette.ivory,
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
     marginTop: 3,
   },
 
   /* QUICK ACTIONS */
-  quickRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
+  quickRow: { flexDirection: "row", gap: 12 },
   quickCard: {
     flex: 1,
     backgroundColor: Colors.ui.surface,
@@ -508,9 +505,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.ui.border,
   },
-  quickTextWrap: {
-    flex: 1,
-  },
+  quickTextWrap: { flex: 1 },
   quickTitle: {
     color: Colors.ui.textPrimary,
     fontWeight: "800",
@@ -566,20 +561,14 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: Colors.ui.elevated,
   },
-  feedHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
+  feedHeader: { flexDirection: "row", justifyContent: "space-between" },
   feedCategory: {
     color: Colors.ui.textSecondary,
     fontSize: 11,
     letterSpacing: 1,
     fontWeight: "800",
   },
-  feedTime: {
-    color: Colors.ui.textSecondary,
-    fontSize: 11,
-  },
+  feedTime: { color: Colors.ui.textSecondary, fontSize: 11 },
   feedTitle: {
     color: Colors.ui.textPrimary,
     fontSize: 16,
@@ -590,11 +579,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 19,
   },
-  feedTagsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
+  feedTagsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   feedTag: {
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -608,9 +593,7 @@ const styles = StyleSheet.create({
   },
 
   /* OPPORTUNITIES */
-  opportunityScroll: {
-    marginHorizontal: -8,
-  },
+  opportunityScroll: { marginHorizontal: -8 },
   opportunityCard: {
     width: Platform.OS === "web" ? 400 : 290,
     marginHorizontal: 8,
@@ -636,10 +619,7 @@ const styles = StyleSheet.create({
     color: Colors.ui.textSecondary,
     fontSize: 13,
   },
-  opportunityHighlights: {
-    gap: 4,
-    marginTop: 6,
-  },
+  opportunityHighlights: { gap: 4, marginTop: 6 },
   opportunityHighlight: {
     color: Colors.ui.textSecondary,
     fontSize: 13,
@@ -651,10 +631,7 @@ const styles = StyleSheet.create({
   },
 
   /* ANALYTICS */
-  analyticsRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
+  analyticsRow: { flexDirection: "row", gap: 12 },
   statCard: {
     flex: 1,
     backgroundColor: Colors.ui.surface,
@@ -674,10 +651,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "900",
   },
-  statSub: {
-    color: Colors.ui.textSecondary,
-    fontSize: 12,
-  },
+  statSub: { color: Colors.ui.textSecondary, fontSize: 12 },
 
   /* MEDIA */
   mediaPanel: {
@@ -697,14 +671,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: Colors.ui.elevated,
   },
-  mediaImage: {
-    width: "100%",
-    height: 112,
-  },
-  mediaBody: {
-    padding: 12,
-    gap: 4,
-  },
+  mediaImage: { width: "100%", height: 112 },
+  mediaBody: { padding: 12, gap: 4 },
   mediaTitle: {
     color: Colors.ui.textPrimary,
     fontSize: 14,
