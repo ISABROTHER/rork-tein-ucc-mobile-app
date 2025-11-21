@@ -112,6 +112,9 @@ interface AppState {
     facultyBreakdown: { faculty: string; percent: number }[];
     taskCompletion: number;
   };
+  isAuthenticated: boolean;
+  login: () => void;
+  logout: () => void;
   updateRsvp: (eventId: string, status: EventItem["rsvpStatus"]) => void;
   submitIssue: (input: Pick<IssueTicket, "category" | "title" | "details"> & { anonymous?: boolean }) => void;
   toggleTask: (taskId: string) => void;
@@ -354,6 +357,7 @@ export const [AppStateProvider, useAppState] = createContextHook<AppState>(() =>
   const [opportunities] = useState<OpportunityItem[]>(initialOpportunities);
   const [payments, setPayments] = useState<PaymentRecord[]>(initialPayments);
   const [learningProgress, setLearningProgress] = useState<number>(72);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const loadCache = async () => {
@@ -363,6 +367,9 @@ export const [AppStateProvider, useAppState] = createContextHook<AppState>(() =>
           return;
         }
         const parsed = JSON.parse(cached) as Partial<AppState>;
+        if (parsed.isAuthenticated) {
+          setIsAuthenticated(parsed.isAuthenticated);
+        }
         if (parsed.profile) {
           setProfile(parsed.profile);
         }
@@ -397,7 +404,7 @@ export const [AppStateProvider, useAppState] = createContextHook<AppState>(() =>
       try {
         await AsyncStorage.setItem(
           storageKey,
-          JSON.stringify({ profile, feed, events, issues, tasks, payments, learningProgress }),
+          JSON.stringify({ isAuthenticated, profile, feed, events, issues, tasks, payments, learningProgress }),
         );
       } catch (error) {
         console.log("Cache save failed", error);
@@ -405,7 +412,10 @@ export const [AppStateProvider, useAppState] = createContextHook<AppState>(() =>
     };
 
     persist();
-  }, [profile, feed, events, issues, tasks, payments, learningProgress]);
+  }, [isAuthenticated, profile, feed, events, issues, tasks, payments, learningProgress]);
+
+  const login = useCallback(() => setIsAuthenticated(true), []);
+  const logout = useCallback(() => setIsAuthenticated(false), []);
 
   const todayQrSeed = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
@@ -485,6 +495,9 @@ export const [AppStateProvider, useAppState] = createContextHook<AppState>(() =>
       learningProgress,
       leaderboard: leaderboardSnapshot,
       analytics,
+      isAuthenticated,
+      login,
+      logout,
       updateRsvp,
       submitIssue,
       toggleTask,
@@ -494,8 +507,11 @@ export const [AppStateProvider, useAppState] = createContextHook<AppState>(() =>
       analytics,
       events,
       feed,
+      isAuthenticated,
       issues,
       learningProgress,
+      login,
+      logout,
       markPaymentSuccess,
       media,
       opportunities,

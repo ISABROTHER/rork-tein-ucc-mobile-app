@@ -1,11 +1,18 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { Activity, BookOpen, CalendarDays, LayoutDashboard, Shield } from "lucide-react-native";
 import React from "react";
 import { Platform } from "react-native";
 
 import Colors from "@/constants/colors";
+import { useAppState } from "@/contexts/app-state";
 
 export default function TabLayout() {
+  const { isAuthenticated } = useAppState();
+
+  if (!isAuthenticated) {
+    return <Redirect href="/login" />;
+  }
+
   return (
     <Tabs
       screenOptions={{

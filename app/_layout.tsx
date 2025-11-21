@@ -16,6 +16,7 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerBackTitle: "Back" }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="assistant" options={{ presentation: "modal", title: "TEIN Assistant" }} />
+      <Stack.Screen name="login" options={{ headerShown: false }} />
     </Stack>
   );
 }
