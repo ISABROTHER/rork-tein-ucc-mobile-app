@@ -27,8 +27,6 @@ export default function EventsScreen() {
   const returningPercent =
     attendanceTotal > 0 ? Math.round((attendanceReturning / attendanceTotal) * 100) : 0;
 
-  const facultyBreakdown = analytics?.facultyBreakdown ?? [];
-
   const hasEvents = events.length > 0;
 
   return (
@@ -139,7 +137,7 @@ export default function EventsScreen() {
           </ImageBackground>
         )}
 
-        {/* Analytics */}
+        {/* Analytics (faculty breakdown removed) */}
         <View style={styles.analyticsPanel}>
           <Text style={styles.sectionTitle}>Event Intelligence</Text>
 
@@ -156,29 +154,6 @@ export default function EventsScreen() {
               <Text style={styles.analyticsMeta}>Returning {attendanceReturning}</Text>
             </View>
           </View>
-
-          {facultyBreakdown.length === 0 ? (
-            <EmptyBlock text="Faculty breakdown will appear after check-ins." />
-          ) : (
-            <View style={styles.facultyGraph}>
-              {facultyBreakdown.map((faculty) => (
-                <View key={faculty.faculty} style={styles.facultyRow}>
-                  <Text style={styles.facultyLabel} numberOfLines={1}>
-                    {faculty.faculty}
-                  </Text>
-                  <View style={styles.facultyBarTrack}>
-                    <View
-                      style={[
-                        styles.facultyBarFill,
-                        { width: `${faculty.percent}%` },
-                      ]}
-                    />
-                  </View>
-                  <Text style={styles.facultyPercent}>{faculty.percent}%</Text>
-                </View>
-              ))}
-            </View>
-          )}
         </View>
 
         {/* Recap */}
@@ -387,35 +362,6 @@ const styles = StyleSheet.create({
   },
   analyticsMeta: {
     color: Colors.ui.textSecondary,
-  },
-  facultyGraph: {
-    gap: 12,
-  },
-  facultyRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  facultyLabel: {
-    color: Colors.ui.textPrimary,
-    flex: 1,
-  },
-  facultyBarTrack: {
-    flex: 3,
-    backgroundColor: Colors.ui.border,
-    height: 8,
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  facultyBarFill: {
-    backgroundColor: Colors.palette.jade,
-    height: 8,
-    borderRadius: 8,
-  },
-  facultyPercent: {
-    color: Colors.ui.textSecondary,
-    width: 50,
-    textAlign: "right",
   },
   recapPanel: {
     backgroundColor: Colors.ui.surface,
