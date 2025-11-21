@@ -11,104 +11,199 @@ const rsvpOptions: EventItem["rsvpStatus"][] = ["going", "interested", "none"];
 export default function EventsScreen() {
   const { events, updateRsvp, analytics } = useAppState();
   const insets = useSafeAreaInsets();
+
   const [selectedEvent, setSelectedEvent] = useState<string>(events[0]?.id ?? "");
 
-  const activeEvent = useMemo(() => events.find((event) => event.id === selectedEvent) ?? events[0], [events, selectedEvent]);
+  const activeEvent = useMemo(
+    () => events.find((event) => event.id === selectedEvent) ?? events[0],
+    [events, selectedEvent]
+  );
+
+  // Safe analytics fallbacks
+  const attendanceTotal = analytics?.attendance?.total ?? 0;
+  const attendanceNewcomers = analytics?.attendance?.newcomers ?? 0;
+  const attendanceReturning = analytics?.attendance?.returning ?? 0;
+
+  const returningPercent =
+    attendanceTotal > 0 ? Math.round((attendanceReturning / attendanceTotal) * 100) : 0;
+
+  const facultyBreakdown = analytics?.facultyBreakdown ?? [];
+
+  const hasEvents = events.length > 0;
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}> 
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
       <ScrollView
         contentContainerStyle={[
           styles.content,
           { paddingTop: 24, paddingBottom: Math.max(insets.bottom, 80) },
         ]}
+        showsVerticalScrollIndicator={false}
         testID="events-scroll"
       >
         <Text style={styles.pageTitle}>Events + Intelligence</Text>
-        <Text style={styles.pageSubtitle}>RSVP, attendance, QR check-in and engagement insights</Text>
+        <Text style={styles.pageSubtitle}>
+          RSVP, attendance, QR check-in and engagement insights
+        </Text>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
-          {events.map((event) => (
-            <TouchableOpacity
-              key={event.id}
-              style={[styles.eventChip, selectedEvent === event.id && styles.eventChipActive]}
-              onPress={() => setSelectedEvent(event.id)}
-              testID={`event-chip-${event.id}`}
-            >
-              <Text style={styles.eventChipLabel}>{event.title}</Text>
-              <Text style={styles.eventChipMeta}>{event.date}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {activeEvent && (
-          <ImageBackground source={{ uri: activeEvent.banner }} style={styles.banner} imageStyle={styles.bannerImage}>
-            <BlurView intensity={40} style={styles.bannerBlur}>
-              <Text style={styles.bannerLabel}>{activeEvent.tags.join(" · ")}</Text>
-              <Text style={styles.bannerTitle}>{activeEvent.title}</Text>
-              <Text style={styles.bannerMeta}>{activeEvent.date} · {activeEvent.time} · {activeEvent.venue}</Text>
-              <Text style={styles.bannerDescription}>{activeEvent.description}</Text>
-              <View style={styles.rsvpRow}>
-                {rsvpOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option}
-                    style={[styles.rsvpButton, activeEvent.rsvpStatus === option && styles.rsvpButtonActive]}
-                    onPress={() => updateRsvp(activeEvent.id, option)}
-                    testID={`rsvp-${option}`}
+        {/* Event selector carousel */}
+        {!hasEvents ? (
+          <EmptyBlock text="No events yet. Executives can create events from Admin." />
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
+            {events.map((event) => {
+              const isActive = selectedEvent === event.id;
+              return (
+                <TouchableOpacity
+                  key={event.id}
+                  style={[styles.eventChip, isActive && styles.eventChipActive]}
+                  onPress={() => setSelectedEvent(event.id)}
+                  testID={`event-chip-${event.id}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select event ${event.title}`}
+                >
+                  <Text
+                    style={[styles.eventChipLabel, isActive && styles.eventChipLabelActive]}
+                    numberOfLines={1}
                   >
-                    <Text style={styles.rsvpLabel}>{option.toUpperCase()}</Text>
-                  </TouchableOpacity>
-                ))}
+                    {event.title}
+                  </Text>
+                  <Text
+                    style={[styles.eventChipMeta, isActive && styles.eventChipMetaActive]}
+                    numberOfLines={1}
+                  >
+                    {event.date}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        )}
+
+        {/* Active event banner */}
+        {activeEvent && (
+          <ImageBackground
+            source={{ uri: activeEvent.banner }}
+            style={styles.banner}
+            imageStyle={styles.bannerImage}
+          >
+            <BlurView intensity={40} style={styles.bannerBlur}>
+              <Text style={styles.bannerLabel} numberOfLines={1}>
+                {activeEvent.tags.join(" · ")}
+              </Text>
+
+              <Text style={styles.bannerTitle} numberOfLines={2}>
+                {activeEvent.title}
+              </Text>
+
+              <Text style={styles.bannerMeta} numberOfLines={2}>
+                {activeEvent.date} · {activeEvent.time} · {activeEvent.venue}
+              </Text>
+
+              <Text style={styles.bannerDescription} numberOfLines={4}>
+                {activeEvent.description}
+              </Text>
+
+              {/* RSVP */}
+              <View style={styles.rsvpRow}>
+                {rsvpOptions.map((option) => {
+                  const isActive = activeEvent.rsvpStatus === option;
+                  return (
+                    <TouchableOpacity
+                      key={option}
+                      style={[styles.rsvpButton, isActive && styles.rsvpButtonActive]}
+                      onPress={() => updateRsvp(activeEvent.id, option)}
+                      testID={`rsvp-${option}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={`RSVP ${option}`}
+                    >
+                      <Text style={[styles.rsvpLabel, isActive && styles.rsvpLabelActive]}>
+                        {option.toUpperCase()}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
+
+              {/* QR / Attendance card */}
               <View style={styles.attendanceCard}>
                 <Text style={styles.attendanceLabel}>QR for check-in</Text>
-                <Text style={styles.attendanceCode}>{activeEvent.attendanceCode}</Text>
-                <Text style={styles.attendanceMeta}>Rotate daily · linked to smart score</Text>
+                <Text style={styles.attendanceCode} numberOfLines={1}>
+                  {activeEvent.attendanceCode}
+                </Text>
+                <Text style={styles.attendanceMeta}>
+                  Rotate daily · linked to smart score
+                </Text>
               </View>
             </BlurView>
           </ImageBackground>
         )}
 
+        {/* Analytics */}
         <View style={styles.analyticsPanel}>
           <Text style={styles.sectionTitle}>Event Intelligence</Text>
+
           <View style={styles.analyticsRow}>
             <View style={styles.analyticsCard}>
               <Text style={styles.analyticsLabel}>Total Attendance</Text>
-              <Text style={styles.analyticsValue}>{analytics.attendance.total}</Text>
-              <Text style={styles.analyticsMeta}>New {analytics.attendance.newcomers}</Text>
+              <Text style={styles.analyticsValue}>{attendanceTotal}</Text>
+              <Text style={styles.analyticsMeta}>New {attendanceNewcomers}</Text>
             </View>
+
             <View style={styles.analyticsCard}>
               <Text style={styles.analyticsLabel}>Returning %</Text>
-              <Text style={styles.analyticsValue}>{Math.round((analytics.attendance.returning / analytics.attendance.total) * 100)}%</Text>
-              <Text style={styles.analyticsMeta}>Returning {analytics.attendance.returning}</Text>
+              <Text style={styles.analyticsValue}>{returningPercent}%</Text>
+              <Text style={styles.analyticsMeta}>Returning {attendanceReturning}</Text>
             </View>
           </View>
-          <View style={styles.facultyGraph}>
-            {analytics.facultyBreakdown.map((faculty) => (
-              <View key={faculty.faculty} style={styles.facultyRow}>
-                <Text style={styles.facultyLabel}>{faculty.faculty}</Text>
-                <View style={styles.facultyBarTrack}>
-                  <View style={[styles.facultyBarFill, { width: `${faculty.percent}%` }]} />
+
+          {facultyBreakdown.length === 0 ? (
+            <EmptyBlock text="Faculty breakdown will appear after check-ins." />
+          ) : (
+            <View style={styles.facultyGraph}>
+              {facultyBreakdown.map((faculty) => (
+                <View key={faculty.faculty} style={styles.facultyRow}>
+                  <Text style={styles.facultyLabel} numberOfLines={1}>
+                    {faculty.faculty}
+                  </Text>
+                  <View style={styles.facultyBarTrack}>
+                    <View
+                      style={[
+                        styles.facultyBarFill,
+                        { width: `${faculty.percent}%` },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.facultyPercent}>{faculty.percent}%</Text>
                 </View>
-                <Text style={styles.facultyPercent}>{faculty.percent}%</Text>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          )}
         </View>
 
+        {/* Recap */}
         <View style={styles.recapPanel}>
           <Text style={styles.sectionTitle}>Recap + Gallery</Text>
+
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {(activeEvent?.recapPhotos ?? []).map((photo, index) => (
-              <ImageBackground key={`${photo}-${index}`} source={{ uri: photo }} style={styles.recapImage} imageStyle={styles.recapImageStyle}>
+              <ImageBackground
+                key={`${photo}-${index}`}
+                source={{ uri: photo }}
+                style={styles.recapImage}
+                imageStyle={styles.recapImageStyle}
+              >
                 <View style={styles.recapBadge}>
                   <Text style={styles.recapBadgeText}>Highlights</Text>
                 </View>
               </ImageBackground>
             ))}
-            {activeEvent?.recapPhotos.length === 0 && (
+
+            {(activeEvent?.recapPhotos?.length ?? 0) === 0 && (
               <View style={styles.emptyRecap}>
-                <Text style={styles.emptyRecapText}>Recap will unlock after the event</Text>
+                <Text style={styles.emptyRecapText}>
+                  Recap will unlock after the event
+                </Text>
               </View>
             )}
           </ScrollView>
@@ -117,6 +212,18 @@ export default function EventsScreen() {
     </View>
   );
 }
+
+/* ----------------------------- Small UI Helper ---------------------------- */
+
+function EmptyBlock({ text }: { text: string }) {
+  return (
+    <View style={styles.emptyBlock}>
+      <Text style={styles.emptyBlockText}>{text}</Text>
+    </View>
+  );
+}
+
+/* --------------------------------- Styles -------------------------------- */
 
 const styles = StyleSheet.create({
   screen: {
@@ -147,6 +254,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.ui.border,
     marginRight: 12,
     backgroundColor: Colors.ui.surface,
+    minWidth: 150,
   },
   eventChipActive: {
     backgroundColor: Colors.palette.crimson,
@@ -156,8 +264,15 @@ const styles = StyleSheet.create({
     color: Colors.ui.textPrimary,
     fontWeight: "700",
   },
+  eventChipLabelActive: {
+    color: Colors.palette.ivory,
+  },
   eventChipMeta: {
     color: Colors.ui.textSecondary,
+  },
+  eventChipMetaActive: {
+    color: Colors.palette.ivory,
+    opacity: 0.9,
   },
   banner: {
     height: 320,
@@ -202,13 +317,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.4)",
     alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.12)",
   },
   rsvpButtonActive: {
     backgroundColor: Colors.palette.ivory,
+    borderColor: Colors.palette.ivory,
   },
   rsvpLabel: {
     color: Colors.palette.ivory,
     fontWeight: "700",
+  },
+  rsvpLabelActive: {
+    color: Colors.ui.background,
+    fontWeight: "800",
   },
   attendanceCard: {
     backgroundColor: "rgba(0,0,0,0.35)",
@@ -284,6 +405,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.ui.border,
     height: 8,
     borderRadius: 8,
+    overflow: "hidden",
   },
   facultyBarFill: {
     backgroundColor: Colors.palette.jade,
@@ -325,15 +447,33 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   emptyRecap: {
-    width: "100%",
+    width: 220,
     padding: 24,
+    marginRight: 12,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: Colors.ui.border,
     alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.ui.elevated,
   },
   emptyRecapText: {
     color: Colors.ui.textSecondary,
     fontSize: 15,
+    textAlign: "center",
+  },
+  emptyBlock: {
+    width: "100%",
+    padding: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.ui.border,
+    backgroundColor: Colors.ui.elevated,
+    alignItems: "center",
+  },
+  emptyBlockText: {
+    color: Colors.ui.textSecondary,
+    fontSize: 14,
+    textAlign: "center",
   },
 });
