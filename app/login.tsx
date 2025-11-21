@@ -12,6 +12,7 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowRight, Phone, ShieldCheck } from "lucide-react-native";
+
 import Colors from "@/constants/colors";
 import { useAppState } from "@/contexts/app-state";
 
@@ -28,7 +29,7 @@ export default function LoginScreen() {
 
   const handleGetCode = async () => {
     if (phoneNumber.length < 9) {
-      setError("Please enter a valid phone number");
+      setError("Enter a valid phone number");
       return;
     }
     setError(null);
@@ -36,12 +37,12 @@ export default function LoginScreen() {
     setTimeout(() => {
       setIsLoading(false);
       setStep("otp");
-    }, 1500);
+    }, 1200);
   };
 
   const handleVerify = async () => {
     if (otp.length < 4) {
-      setError("Please enter the 4-digit code");
+      setError("Enter the 4-digit code");
       return;
     }
     setError(null);
@@ -50,7 +51,7 @@ export default function LoginScreen() {
       setIsLoading(false);
       login();
       router.replace("/(tabs)/dashboard");
-    }, 1500);
+    }, 1200);
   };
 
   const otpBoxes = useMemo(() => {
@@ -60,80 +61,80 @@ export default function LoginScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Soft background accents (no deps) */}
-      <View style={styles.bgAccentTop} />
-      <View style={styles.bgAccentBottom} />
+      {/* Gradient halo background */}
+      <View style={styles.gradientHalo} />
+      <View style={styles.gradientHalo2} />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
       >
         <View style={styles.content}>
-          {/* Header / Branding */}
-          <View style={styles.header}>
-            <View style={styles.logoWrap}>
-              <View style={styles.logoInner}>
-                <ShieldCheck size={34} color={Colors.palette.ivory} />
+          {/* HERO */}
+          <View style={styles.heroWrap}>
+            <View style={styles.crestWrap}>
+              <View style={styles.crestInner}>
+                <ShieldCheck size={42} color={Colors.palette.ivory} strokeWidth={2.5} />
               </View>
             </View>
 
-            <Text style={styles.title}>TEIN UCC</Text>
-            <Text style={styles.subtitle}>Tertiary Education Institutions Network</Text>
-            <Text style={styles.tagline}>Connect. Learn. Lead.</Text>
+            <Text style={styles.heroTitle}>TEIN UCC</Text>
+            <Text style={styles.heroSubtitle}>Tertiary Education Institutions Network</Text>
+            <Text style={styles.heroTag}>Connect • Learn • Lead</Text>
           </View>
 
-          {/* Form Card */}
+          {/* CARD */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>
               {step === "phone" ? "Welcome back" : "Verify your number"}
             </Text>
+
             <Text style={styles.cardSub}>
               {step === "phone"
                 ? "Enter your mobile number to continue."
-                : "We sent a 4-digit code to your phone."}
+                : "We sent a 4-digit verification code."}
             </Text>
 
             {step === "phone" ? (
               <>
-                <Text style={styles.label}>Mobile number</Text>
-                <View style={styles.inputWrapper}>
-                  <View style={styles.inputIconWrap}>
+                <View style={styles.inputLabelRow}>
+                  <Text style={styles.inputLabel}>Mobile Number</Text>
+                </View>
+
+                <View style={styles.inputBlock}>
+                  <View style={styles.inputIcon}>
                     <Phone size={18} color={Colors.ui.textSecondary} />
                   </View>
                   <TextInput
-                    style={styles.input}
+                    style={styles.inputField}
                     placeholder="054 123 4567"
                     placeholderTextColor={Colors.ui.textSecondary}
                     keyboardType="phone-pad"
                     value={phoneNumber}
                     onChangeText={setPhoneNumber}
                     autoFocus
-                    testID="login-phone"
                   />
                 </View>
 
                 <Text style={styles.helperText}>
-                  We’ll send you a one-time password (OTP).
+                  We will text you a one-time password (OTP).
                 </Text>
               </>
             ) : (
               <>
-                <Text style={styles.label}>Verification code</Text>
+                <View style={styles.inputLabelRow}>
+                  <Text style={styles.inputLabel}>Verification Code</Text>
+                </View>
 
-                {/* 4-box visual OTP (single input for safety) */}
-                <TouchableOpacity
-                  activeOpacity={1}
-                  onPress={() => {}}
-                  style={styles.otpRow}
-                  accessibilityRole="text"
-                >
-                  {otpBoxes.map((digit, i) => (
+                {/* Fake OTP boxes */}
+                <TouchableOpacity activeOpacity={1} style={styles.otpRow}>
+                  {otpBoxes.map((digit, index) => (
                     <View
-                      key={`otp-box-${i}`}
+                      key={index}
                       style={[
                         styles.otpBox,
                         digit && styles.otpBoxFilled,
-                        otp.length === i && styles.otpBoxActive,
+                        otp.length === index && styles.otpBoxActive,
                       ]}
                     >
                       <Text style={styles.otpDigit}>{digit}</Text>
@@ -141,19 +142,17 @@ export default function LoginScreen() {
                   ))}
                 </TouchableOpacity>
 
+                {/* Hidden actual input */}
                 <TextInput
                   style={styles.hiddenOtpInput}
-                  placeholder="1234"
-                  placeholderTextColor="transparent"
                   keyboardType="number-pad"
                   value={otp}
                   onChangeText={setOtp}
                   maxLength={4}
                   autoFocus
-                  testID="login-otp"
                 />
 
-                <TouchableOpacity onPress={() => setStep("phone")} testID="change-number">
+                <TouchableOpacity onPress={() => setStep("phone")}>
                   <Text style={styles.changeNumber}>Change number</Text>
                 </TouchableOpacity>
               </>
@@ -162,32 +161,31 @@ export default function LoginScreen() {
             {error && <Text style={styles.errorText}>{error}</Text>}
 
             <TouchableOpacity
-              style={[styles.button, isLoading && styles.buttonDisabled]}
-              onPress={step === "phone" ? handleGetCode : handleVerify}
+              style={[styles.button, isLoading && { opacity: 0.7 }]}
               disabled={isLoading}
-              testID="login-submit"
+              onPress={step === "phone" ? handleGetCode : handleVerify}
             >
               {isLoading ? (
                 <ActivityIndicator color={Colors.palette.ivory} />
               ) : (
-                <View style={styles.buttonContent}>
+                <View style={styles.buttonInner}>
                   <Text style={styles.buttonText}>
                     {step === "phone" ? "Get Code" : "Verify & Login"}
                   </Text>
-                  <ArrowRight size={18} color={Colors.palette.ivory} strokeWidth={2.5} />
+                  <ArrowRight size={20} color={Colors.palette.ivory} strokeWidth={2.5} />
                 </View>
               )}
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Footer */}
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 18) }]}>
+        {/* FOOTER */}
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <Text style={styles.footerText}>By continuing, you agree to our</Text>
-          <View style={styles.footerLinks}>
-            <Text style={styles.linkText}>Terms of Service</Text>
+          <View style={styles.footerRow}>
+            <Text style={styles.footerLink}>Terms of Service</Text>
             <Text style={styles.footerText}> and </Text>
-            <Text style={styles.linkText}>Privacy Policy</Text>
+            <Text style={styles.footerLink}>Privacy Policy</Text>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -196,249 +194,246 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  /* MAIN CONTAINER */
   container: {
     flex: 1,
-    backgroundColor: Colors.ui.background, // keep your system background
-  },
-  keyboardView: {
-    flex: 1,
+    backgroundColor: Colors.ui.background,
   },
 
-  /* Background accents */
-  bgAccentTop: {
+  /* GRADIENT HALO */
+  gradientHalo: {
     position: "absolute",
-    top: -120,
-    right: -80,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: Colors.palette.crimson + "14",
-  },
-  bgAccentBottom: {
-    position: "absolute",
-    bottom: -140,
-    left: -100,
+    top: -140,
+    right: -60,
     width: 320,
     height: 320,
     borderRadius: 160,
-    backgroundColor: Colors.palette.jade + "12",
+    backgroundColor: Colors.palette.crimson + "22",
+  },
+  gradientHalo2: {
+    position: "absolute",
+    bottom: -160,
+    left: -80,
+    width: 340,
+    height: 340,
+    borderRadius: 170,
+    backgroundColor: Colors.palette.jade + "1A",
   },
 
+  /* CONTENT */
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     justifyContent: "center",
-    gap: 18,
   },
 
-  header: {
+  /* HERO */
+  heroWrap: {
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 38,
   },
-  logoWrap: {
-    width: 88,
-    height: 88,
-    borderRadius: 26,
+  crestWrap: {
+    width: 94,
+    height: 94,
+    borderRadius: 32,
     backgroundColor: Colors.palette.crimson + "18",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: Colors.palette.crimson + "2A",
+    borderColor: Colors.palette.crimson + "30",
   },
-  logoInner: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
+  crestInner: {
+    width: 68,
+    height: 68,
+    borderRadius: 22,
     backgroundColor: Colors.palette.crimson,
     justifyContent: "center",
     alignItems: "center",
   },
-
-  title: {
-    fontSize: 30,
+  heroTitle: {
+    fontSize: 32,
     fontWeight: "800",
     color: Colors.ui.textPrimary,
-    letterSpacing: -0.6,
+    letterSpacing: -0.8,
   },
-  subtitle: {
+  heroSubtitle: {
     fontSize: 12,
     fontWeight: "700",
     color: Colors.ui.textSecondary,
-    marginTop: 4,
     textTransform: "uppercase",
-    letterSpacing: 0.8,
+    letterSpacing: 0.9,
+    marginTop: 4,
   },
-  tagline: {
-    fontSize: 14,
-    color: Colors.palette.crimson,
-    fontWeight: "600",
+  heroTag: {
     marginTop: 6,
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.palette.crimson,
   },
 
-  /* Card */
+  /* CARD */
   card: {
     width: "100%",
-    backgroundColor: Colors.ui.surface,
-    borderRadius: 24,
+    backgroundColor: Colors.ui.surface + "F2",
+    borderRadius: 28,
+    padding: 22,
     borderWidth: 1,
     borderColor: Colors.ui.border,
-    padding: 18,
-    gap: 10,
     shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 3,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "800",
     color: Colors.ui.textPrimary,
   },
   cardSub: {
-    fontSize: 13,
+    fontSize: 14,
     color: Colors.ui.textSecondary,
-    marginBottom: 4,
+    marginBottom: 16,
   },
 
-  label: {
-    fontSize: 13,
+  inputLabelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  inputLabel: {
     fontWeight: "700",
     color: Colors.ui.textPrimary,
-    marginBottom: 6,
-    marginLeft: 2,
+    fontSize: 14,
   },
-  inputWrapper: {
+
+  /* PHONE INPUT */
+  inputBlock: {
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: Colors.ui.elevated,
     flexDirection: "row",
     alignItems: "center",
-    height: 56,
-    backgroundColor: Colors.ui.elevated,
-    borderRadius: 16,
     paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: Colors.ui.border,
+    marginBottom: 6,
   },
-  inputIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  inputIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     backgroundColor: Colors.ui.surface,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 8,
+    marginRight: 10,
     borderWidth: 1,
     borderColor: Colors.ui.border,
   },
-  input: {
+  inputField: {
     flex: 1,
     fontSize: 18,
     fontWeight: "700",
     color: Colors.ui.textPrimary,
-    letterSpacing: 0.5,
   },
 
   helperText: {
-    fontSize: 12,
     color: Colors.ui.textSecondary,
-    marginTop: 6,
-    lineHeight: 18,
+    fontSize: 13,
+    marginTop: 4,
   },
 
-  /* OTP boxes */
+  /* OTP */
   otpRow: {
     flexDirection: "row",
     gap: 10,
-    justifyContent: "space-between",
-    marginTop: 2,
+    marginTop: 4,
   },
   otpBox: {
     flex: 1,
     height: 56,
-    borderRadius: 14,
+    borderRadius: 16,
     backgroundColor: Colors.ui.elevated,
     borderWidth: 1,
     borderColor: Colors.ui.border,
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
   },
   otpBoxFilled: {
     borderColor: Colors.palette.jade,
-    backgroundColor: Colors.palette.jade + "12",
+    backgroundColor: Colors.palette.jade + "16",
   },
   otpBoxActive: {
     borderColor: Colors.palette.crimson,
   },
   otpDigit: {
     fontSize: 20,
-    fontWeight: "800",
     color: Colors.ui.textPrimary,
+    fontWeight: "800",
   },
+
   hiddenOtpInput: {
-    position: "absolute",
     opacity: 0,
-    height: 0,
-    width: 0,
+    width: 1,
+    height: 1,
+    position: "absolute",
   },
 
   changeNumber: {
     fontSize: 13,
     color: Colors.palette.crimson,
     fontWeight: "700",
-    marginTop: 8,
+    marginTop: 10,
   },
 
+  /* ERROR */
   errorText: {
-    fontSize: 13,
+    marginTop: 8,
     color: Colors.palette.crimson,
-    marginTop: 2,
     fontWeight: "600",
   },
 
+  /* BUTTON */
   button: {
     height: 56,
     backgroundColor: Colors.palette.crimson,
-    borderRadius: 16,
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 20,
     shadowColor: Colors.palette.crimson,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.22,
-    shadowRadius: 14,
-    elevation: 4,
+    shadowOpacity: 0.25,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonContent: {
+  buttonInner: {
     flexDirection: "row",
-    alignItems: "center",
     gap: 8,
+    alignItems: "center",
   },
   buttonText: {
-    fontSize: 16,
-    fontWeight: "800",
     color: Colors.palette.ivory,
-    letterSpacing: 0.3,
+    fontWeight: "800",
+    fontSize: 16,
   },
 
+  /* FOOTER */
   footer: {
     alignItems: "center",
     paddingHorizontal: 24,
-    gap: 4,
   },
-  footerText: {
-    fontSize: 12,
-    color: Colors.ui.textSecondary,
-  },
-  footerLinks: {
+  footerRow: {
     flexDirection: "row",
   },
-  linkText: {
+  footerText: {
+    color: Colors.ui.textSecondary,
     fontSize: 12,
+  },
+  footerLink: {
     color: Colors.palette.crimson,
     fontWeight: "700",
+    fontSize: 12,
   },
 });
- 
