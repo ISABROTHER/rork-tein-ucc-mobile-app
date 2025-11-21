@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,10 +8,11 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowRight, Phone, ShieldCheck } from "lucide-react-native";
+import { ArrowRight, Phone, ShieldCheck, Lock, HelpCircle } from "lucide-react-native";
 
 import Colors from "@/constants/colors";
 import { useAppState } from "@/contexts/app-state";
@@ -27,17 +28,54 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // New: stay signed in toggle
+  const [staySignedIn, setStaySignedIn] = useState(true);
+
+  // New: resend timer
+  const RESEND_SECONDS = 60;
+  const [resendLeft, setResendLeft] = useState(0);
+
+  // New: store what number was used for OTP step
+  const [sentToNumber, setSentToNumber] = useState("");
+
+  // Tick countdown when on OTP step
+  useEffect(() => {
+    if (step !== "otp" || resendLeft <= 0) return;
+    const t = setInterval(() => {
+      setResendLeft((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [step, resendLeft]);
+
   const handleGetCode = async () => {
-    if (phoneNumber.length < 9) {
+    const cleaned = phoneNumber.replace(/\s/g, "");
+    // Basic Ghana-friendly validation: 9–10 digits after stripping spaces.
+    if (cleaned.length < 9) {
       setError("Enter a valid phone number");
       return;
     }
+
     setError(null);
     setIsLoading(true);
+
+    // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
+      setSentToNumber(cleaned);
       setStep("otp");
+      setResendLeft(RESEND_SECONDS);
     }, 1200);
+  };
+
+  const handleResend = () => {
+    if (resendLeft > 0) return;
+    setError(null);
+    setIsLoading(true);
+
+    setTimeout(() => {
+      setIsLoading(false);
+      setResendLeft(RESEND_SECONDS);
+    }, 900);
   };
 
   const handleVerify = async () => {
@@ -45,10 +83,13 @@ export default function LoginScreen() {
       setError("Enter the 4-digit code");
       return;
     }
+
     setError(null);
     setIsLoading(true);
+
     setTimeout(() => {
       setIsLoading(false);
+      // keep same behavior; staySignedIn can be wired to storage later
       login();
       router.replace("/(tabs)/dashboard");
     }, 1200);
@@ -59,9 +100,13 @@ export default function LoginScreen() {
     return new Array(4).fill("").map((_, i) => chars[i] ?? "");
   }, [otp]);
 
+  const formattedTimer = `${String(Math.floor(resendLeft / 60)).padStart(2, "0")}:${String(
+    resendLeft % 60
+  ).padStart(2, "0")}`;
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Gradient halo background */}
+      {/* Premium background halos */}
       <View style={styles.gradientHalo} />
       <View style={styles.gradientHalo2} />
 
@@ -83,28 +128,26 @@ export default function LoginScreen() {
             <Text style={styles.heroTag}>Connect • Learn • Lead</Text>
           </View>
 
-          {/* CARD */}
+          {/* FORM CARD */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>
               {step === "phone" ? "Welcome back" : "Verify your number"}
             </Text>
-
             <Text style={styles.cardSub}>
               {step === "phone"
                 ? "Enter your mobile number to continue."
-                : "We sent a 4-digit verification code."}
+                : `We sent a code to ${sentToNumber || phoneNumber}.`}
             </Text>
 
             {step === "phone" ? (
               <>
-                <View style={styles.inputLabelRow}>
-                  <Text style={styles.inputLabel}>Mobile Number</Text>
-                </View>
+                <Text style={styles.inputLabel}>Mobile Number</Text>
 
                 <View style={styles.inputBlock}>
                   <View style={styles.inputIcon}>
                     <Phone size={18} color={Colors.ui.textSecondary} />
                   </View>
+
                   <TextInput
                     style={styles.inputField}
                     placeholder="054 123 4567"
@@ -113,21 +156,42 @@ export default function LoginScreen() {
                     value={phoneNumber}
                     onChangeText={setPhoneNumber}
                     autoFocus
+                    accessibilityLabel="Enter phone number"
+                    testID="login-phone"
+                  />
+                </View>
+
+                {/* Stay signed in */}
+                <View style={styles.toggleRow}>
+                  <Text style={styles.toggleLabel}>Stay signed in</Text>
+                  <Switch
+                    value={staySignedIn}
+                    onValueChange={setStaySignedIn}
+                    trackColor={{
+                      false: Colors.ui.border,
+                      true: Colors.palette.jade + "99",
+                    }}
+                    thumbColor={staySignedIn ? Colors.palette.jade : Colors.ui.surface}
+                    testID="stay-signed-in"
                   />
                 </View>
 
                 <Text style={styles.helperText}>
-                  We will text you a one-time password (OTP).
+                  We’ll text you a one-time password (OTP).
                 </Text>
               </>
             ) : (
               <>
-                <View style={styles.inputLabelRow}>
-                  <Text style={styles.inputLabel}>Verification Code</Text>
-                </View>
+                <Text style={styles.inputLabel}>Verification Code</Text>
 
-                {/* Fake OTP boxes */}
-                <TouchableOpacity activeOpacity={1} style={styles.otpRow}>
+                {/* OTP boxes UI */}
+                <TouchableOpacity
+                  activeOpacity={1}
+                  style={styles.otpRow}
+                  accessibilityRole="text"
+                  accessibilityLabel="OTP input"
+                  testID="otp-boxes"
+                >
                   {otpBoxes.map((digit, index) => (
                     <View
                       key={index}
@@ -150,9 +214,33 @@ export default function LoginScreen() {
                   onChangeText={setOtp}
                   maxLength={4}
                   autoFocus
+                  accessibilityLabel="Enter OTP code"
+                  testID="login-otp"
                 />
 
-                <TouchableOpacity onPress={() => setStep("phone")}>
+                {/* Resend row */}
+                <View style={styles.resendRow}>
+                  <Text style={styles.resendText}>
+                    {resendLeft > 0 ? `Resend available in ${formattedTimer}` : "Didn’t get a code?"}
+                  </Text>
+
+                  <TouchableOpacity
+                    onPress={handleResend}
+                    disabled={resendLeft > 0 || isLoading}
+                    testID="resend-otp"
+                  >
+                    <Text
+                      style={[
+                        styles.resendLink,
+                        (resendLeft > 0 || isLoading) && styles.resendLinkDisabled,
+                      ]}
+                    >
+                      Resend
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity onPress={() => setStep("phone")} testID="change-number">
                   <Text style={styles.changeNumber}>Change number</Text>
                 </TouchableOpacity>
               </>
@@ -164,6 +252,9 @@ export default function LoginScreen() {
               style={[styles.button, isLoading && { opacity: 0.7 }]}
               disabled={isLoading}
               onPress={step === "phone" ? handleGetCode : handleVerify}
+              accessibilityRole="button"
+              accessibilityLabel={step === "phone" ? "Get OTP code" : "Verify and login"}
+              testID="login-submit"
             >
               {isLoading ? (
                 <ActivityIndicator color={Colors.palette.ivory} />
@@ -176,6 +267,22 @@ export default function LoginScreen() {
                 </View>
               )}
             </TouchableOpacity>
+
+            {/* Help / Support */}
+            <TouchableOpacity style={styles.helpRow} testID="login-help">
+              <HelpCircle size={16} color={Colors.ui.textSecondary} />
+              <Text style={styles.helpText}>
+                Trouble logging in? Contact TEIN Support
+              </Text>
+            </TouchableOpacity>
+
+            {/* Security reassurance */}
+            <View style={styles.securityRow}>
+              <Lock size={14} color={Colors.ui.textSecondary} />
+              <Text style={styles.securityText}>
+                Your number is encrypted and never shared.
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -194,13 +301,11 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  /* MAIN CONTAINER */
   container: {
     flex: 1,
     backgroundColor: Colors.ui.background,
   },
 
-  /* GRADIENT HALO */
   gradientHalo: {
     position: "absolute",
     top: -140,
@@ -220,14 +325,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.palette.jade + "1A",
   },
 
-  /* CONTENT */
   content: {
     flex: 1,
     paddingHorizontal: 24,
     justifyContent: "center",
   },
 
-  /* HERO */
   heroWrap: {
     alignItems: "center",
     marginBottom: 38,
@@ -272,7 +375,6 @@ const styles = StyleSheet.create({
     color: Colors.palette.crimson,
   },
 
-  /* CARD */
   card: {
     width: "100%",
     backgroundColor: Colors.ui.surface + "F2",
@@ -297,18 +399,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 
-  inputLabelRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 6,
-  },
   inputLabel: {
     fontWeight: "700",
     color: Colors.ui.textPrimary,
     fontSize: 14,
+    marginBottom: 6,
   },
 
-  /* PHONE INPUT */
   inputBlock: {
     height: 56,
     borderRadius: 18,
@@ -338,13 +435,25 @@ const styles = StyleSheet.create({
     color: Colors.ui.textPrimary,
   },
 
+  toggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  toggleLabel: {
+    color: Colors.ui.textPrimary,
+    fontWeight: "700",
+    fontSize: 14,
+  },
+
   helperText: {
     color: Colors.ui.textSecondary,
     fontSize: 13,
     marginTop: 4,
   },
 
-  /* OTP */
   otpRow: {
     flexDirection: "row",
     gap: 10,
@@ -372,12 +481,30 @@ const styles = StyleSheet.create({
     color: Colors.ui.textPrimary,
     fontWeight: "800",
   },
-
   hiddenOtpInput: {
     opacity: 0,
     width: 1,
     height: 1,
     position: "absolute",
+  },
+
+  resendRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  resendText: {
+    color: Colors.ui.textSecondary,
+    fontSize: 13,
+  },
+  resendLink: {
+    color: Colors.palette.crimson,
+    fontWeight: "800",
+    fontSize: 13,
+  },
+  resendLinkDisabled: {
+    opacity: 0.5,
   },
 
   changeNumber: {
@@ -387,21 +514,20 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  /* ERROR */
   errorText: {
     marginTop: 8,
     color: Colors.palette.crimson,
     fontWeight: "600",
+    fontSize: 13,
   },
 
-  /* BUTTON */
   button: {
     height: 56,
     backgroundColor: Colors.palette.crimson,
     borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 18,
     shadowColor: Colors.palette.crimson,
     shadowOpacity: 0.25,
     shadowRadius: 18,
@@ -419,7 +545,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  /* FOOTER */
+  helpRow: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    justifyContent: "center",
+  },
+  helpText: {
+    color: Colors.ui.textSecondary,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
+  securityRow: {
+    marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    justifyContent: "center",
+  },
+  securityText: {
+    color: Colors.ui.textSecondary,
+    fontSize: 12,
+  },
+
   footer: {
     alignItems: "center",
     paddingHorizontal: 24,
