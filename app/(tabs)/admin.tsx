@@ -1,5 +1,5 @@
 import { BarChart3, BellRing, CalendarPlus, FileText, ShieldCheck, Sparkles, Users } from "lucide-react-native";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -10,177 +10,310 @@ export default function AdminScreen() {
   const insets = useSafeAreaInsets();
   const { analytics, feed, events, issues, tasks, payments } = useAppState();
 
+  // Local state only for inputs (safe, does not alter existing app state)
+  const [headline, setHeadline] = useState("");
+  const [body, setBody] = useState("");
+
+  // Safe derived values (won't break if fields are missing)
+  const attendanceTotal = analytics?.attendance?.total ?? 0;
+  const attendanceNewcomers = analytics?.attendance?.newcomers ?? 0;
+
+  const recentFeed = useMemo(() => feed.slice(0, 2), [feed]);
+  const recentIssues = useMemo(() => issues.slice(0, 3), [issues]);
+
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}> 
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={[styles.content, { paddingTop: 24, paddingBottom: Math.max(insets.bottom, 72) }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: 24, paddingBottom: Math.max(insets.bottom, 72) },
+        ]}
+        showsVerticalScrollIndicator={false}
         testID="admin-scroll"
       >
+        {/* Summary */}
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Members verified</Text>
-            <Text style={styles.summaryValue}>3,812</Text>
-            <Text style={styles.summaryMeta}>+126 this month</Text>
+            {/* Keep your number stable, but allow analytics override if you add it later */}
+            <Text style={styles.summaryValue}>
+              {analytics?.members?.verifiedTotal ?? "3,812"}
+            </Text>
+            <Text style={styles.summaryMeta}>
+              {analytics?.members?.verifiedDeltaMonth != null
+                ? `+${analytics.members.verifiedDeltaMonth} this month`
+                : "+126 this month"}
+            </Text>
           </View>
+
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Attendance</Text>
-            <Text style={styles.summaryValue}>{analytics.attendance.total}</Text>
-            <Text style={styles.summaryMeta}>New {analytics.attendance.newcomers}</Text>
+            <Text style={styles.summaryValue}>{attendanceTotal}</Text>
+            <Text style={styles.summaryMeta}>New {attendanceNewcomers}</Text>
           </View>
         </View>
 
+        {/* Announcements Manager */}
         <View style={styles.panel}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Announcements manager</Text>
-            <BellRing color={Colors.palette.ivory} />
-          </View>
+          <SectionHeader title="Announcements manager" icon={<BellRing color={Colors.palette.ivory} />} />
+
           <TextInput
             style={styles.input}
             placeholder="Headline"
             placeholderTextColor={Colors.ui.textSecondary}
+            value={headline}
+            onChangeText={setHeadline}
             testID="admin-announcement-title"
           />
           <TextInput
             style={[styles.input, styles.multiline]}
             placeholder="Drop loyal, confident copy and attach campus specific CTA"
             placeholderTextColor={Colors.ui.textSecondary}
+            value={body}
+            onChangeText={setBody}
             multiline
             numberOfLines={3}
             testID="admin-announcement-body"
           />
-          <TouchableOpacity style={styles.primaryButton} testID="schedule-announcement">
-            <Text style={styles.primaryButtonText}>Schedule push @ 6AM</Text>
-          </TouchableOpacity>
+
+          <PrimaryButton
+            label="Schedule push @ 6AM"
+            testID="schedule-announcement"
+            disabled={!headline.trim() || !body.trim()}
+          />
+
           <View style={styles.listDivider} />
-          {feed.slice(0, 2).map((item) => (
-            <View key={item.id} style={styles.announcementRow}>
-              <View>
-                <Text style={styles.announcementTitle}>{item.title}</Text>
-                <Text style={styles.announcementMeta}>{item.category} · {item.timestamp}</Text>
+
+          {recentFeed.length === 0 ? (
+            <EmptyRow text="No announcements yet. Create the first one above." />
+          ) : (
+            recentFeed.map((item) => (
+              <View key={item.id} style={styles.announcementRow}>
+                <View style={{ flex: 1, paddingRight: 12 }}>
+                  <Text style={styles.announcementTitle} numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.announcementMeta} numberOfLines={1}>
+                    {item.category} · {item.timestamp}
+                  </Text>
+                </View>
+                <Text style={styles.statusBadge}>Scheduled</Text>
               </View>
-              <Text style={styles.statusBadge}>Scheduled</Text>
-            </View>
-          ))}
+            ))
+          )}
         </View>
 
+        {/* Events Intelligence */}
         <View style={styles.panel}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Events intelligence</Text>
-            <CalendarPlus color={Colors.palette.ivory} />
-          </View>
-          {events.map((event) => (
-            <View key={event.id} style={styles.eventRow}>
-              <View>
-                <Text style={styles.eventTitle}>{event.title}</Text>
-                <Text style={styles.eventMeta}>{event.date} · {event.time} · {event.venue}</Text>
+          <SectionHeader title="Events intelligence" icon={<CalendarPlus color={Colors.palette.ivory} />} />
+
+          {events.length === 0 ? (
+            <EmptyRow text="No events created yet." />
+          ) : (
+            events.map((event) => (
+              <View key={event.id} style={styles.eventRow}>
+                <View style={{ flex: 1, paddingRight: 12 }}>
+                  <Text style={styles.eventTitle} numberOfLines={1}>
+                    {event.title}
+                  </Text>
+                  <Text style={styles.eventMeta} numberOfLines={2}>
+                    {event.date} · {event.time} · {event.venue}
+                  </Text>
+                </View>
+                <SecondaryButton
+                  label="Analytics"
+                  testID={`event-${event.id}-analyze`}
+                />
               </View>
-              <TouchableOpacity style={styles.secondaryButton} testID={`event-${event.id}-analyze`}>
-                <Text style={styles.secondaryButtonText}>Analytics</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-          <TouchableOpacity style={styles.primaryButton} testID="create-event">
-            <Text style={styles.primaryButtonText}>Create new event</Text>
-          </TouchableOpacity>
+            ))
+          )}
+
+          <PrimaryButton label="Create new event" testID="create-event" />
         </View>
 
+        {/* Content Automation */}
         <View style={styles.panel}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Content automation</Text>
-            <Sparkles color={Colors.palette.amber} />
-          </View>
-          <View style={styles.automationRow}>
-            <Text style={styles.automationTitle}>Weekly posting reminders</Text>
-            <Text style={styles.automationMeta}>Mondays · 06:00</Text>
-          </View>
-          <View style={styles.automationRow}>
-            <Text style={styles.automationTitle}>Auto-rotate TEIN 101 modules</Text>
-            <Text style={styles.automationMeta}>Next drop · Sunday</Text>
-          </View>
-          <View style={styles.automationRow}>
-            <Text style={styles.automationTitle}>Nudge inactive members</Text>
-            <Text style={styles.automationMeta}>274 pending</Text>
-          </View>
+          <SectionHeader title="Content automation" icon={<Sparkles color={Colors.palette.amber} />} />
+
+          <AutomationRow title="Weekly posting reminders" meta="Mondays · 06:00" />
+          <AutomationRow title="Auto-rotate TEIN 101 modules" meta="Next drop · Sunday" />
+          <AutomationRow title="Nudge inactive members" meta="274 pending" />
         </View>
 
+        {/* Issues Queue */}
         <View style={styles.panel}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Issues queue</Text>
-            <ShieldCheck color={Colors.palette.jade} />
-          </View>
-          {issues.slice(0, 3).map((issue) => (
-            <View key={issue.id} style={styles.issueRow}>
-              <View>
-                <Text style={styles.issueTitle}>{issue.title}</Text>
-                <Text style={styles.issueMeta}>{issue.category} · {issue.status}</Text>
+          <SectionHeader title="Issues queue" icon={<ShieldCheck color={Colors.palette.jade} />} />
+
+          {recentIssues.length === 0 ? (
+            <EmptyRow text="No reported issues right now." />
+          ) : (
+            recentIssues.map((issue) => (
+              <View key={issue.id} style={styles.issueRow}>
+                <View style={{ flex: 1, paddingRight: 12 }}>
+                  <Text style={styles.issueTitle} numberOfLines={1}>
+                    {issue.title}
+                  </Text>
+                  <Text style={styles.issueMeta} numberOfLines={1}>
+                    {issue.category} · {issue.status}
+                  </Text>
+                </View>
+                <SecondaryButton label="Assign" testID={`assign-${issue.id}`} />
               </View>
-              <TouchableOpacity style={styles.secondaryButton} testID={`assign-${issue.id}`}>
-                <Text style={styles.secondaryButtonText}>Assign</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
+            ))
+          )}
         </View>
 
+        {/* Tasks Control */}
         <View style={styles.panel}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Tasks control</Text>
-            <BarChart3 color={Colors.palette.ivory} />
-          </View>
-          {tasks.map((task) => (
-            <View key={task.id} style={styles.taskRow}>
-              <View>
-                <Text style={styles.taskTitle}>{task.title}</Text>
-                <Text style={styles.taskMeta}>{task.group} · due {task.dueDate}</Text>
+          <SectionHeader title="Tasks control" icon={<BarChart3 color={Colors.palette.ivory} />} />
+
+          {tasks.length === 0 ? (
+            <EmptyRow text="No tasks created yet." />
+          ) : (
+            tasks.map((task) => (
+              <View key={task.id} style={styles.taskRow}>
+                <View style={{ flex: 1, paddingRight: 12 }}>
+                  <Text style={styles.taskTitle} numberOfLines={1}>
+                    {task.title}
+                  </Text>
+                  <Text style={styles.taskMeta} numberOfLines={1}>
+                    {task.group} · due {task.dueDate}
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    styles.taskStatus,
+                    task.completed && styles.taskStatusDone,
+                  ]}
+                >
+                  {task.completed ? "Complete" : "Pending"}
+                </Text>
               </View>
-              <Text style={[styles.taskStatus, task.completed && styles.taskStatusDone]}>{task.completed ? "Complete" : "Pending"}</Text>
-            </View>
-          ))}
+            ))
+          )}
         </View>
 
+        {/* Finance Dashboard */}
         <View style={styles.panel}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Finance dashboard</Text>
-            <FileText color={Colors.palette.ivory} />
-          </View>
-          {payments.map((payment) => (
-            <View key={payment.id} style={styles.paymentRow}>
-              <Text style={styles.paymentTitle}>{payment.label}</Text>
-              <Text style={styles.paymentAmount}>{payment.amount}</Text>
-            </View>
-          ))}
-          <TouchableOpacity style={styles.secondaryButton} testID="export-finance">
-            <Text style={styles.secondaryButtonText}>Export CSV for SEC</Text>
-          </TouchableOpacity>
+          <SectionHeader title="Finance dashboard" icon={<FileText color={Colors.palette.ivory} />} />
+
+          {payments.length === 0 ? (
+            <EmptyRow text="No payments recorded yet." />
+          ) : (
+            payments.map((payment) => (
+              <View key={payment.id} style={styles.paymentRow}>
+                <Text style={styles.paymentTitle} numberOfLines={1}>
+                  {payment.label}
+                </Text>
+                <Text style={styles.paymentAmount}>
+                  {payment.amount}
+                </Text>
+              </View>
+            ))
+          )}
+
+          <SecondaryButton label="Export CSV for SEC" testID="export-finance" />
         </View>
 
+        {/* User Management */}
         <View style={styles.panel}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>User management</Text>
-            <Users color={Colors.palette.ivory} />
-          </View>
+          <SectionHeader title="User management" icon={<Users color={Colors.palette.ivory} />} />
+
           <View style={styles.userGrid}>
-            <View style={styles.userTile}>
-              <Text style={styles.userTileValue}>24</Text>
-              <Text style={styles.userTileLabel}>Pending verification</Text>
-            </View>
-            <View style={styles.userTile}>
-              <Text style={styles.userTileValue}>6</Text>
-              <Text style={styles.userTileLabel}>Admins</Text>
-            </View>
-            <View style={styles.userTile}>
-              <Text style={styles.userTileValue}>52</Text>
-              <Text style={styles.userTileLabel}>Volunteers</Text>
-            </View>
+            <UserTile value={String(analytics?.users?.pendingVerification ?? 24)} label="Pending verification" />
+            <UserTile value={String(analytics?.users?.admins ?? 6)} label="Admins" />
+            <UserTile value={String(analytics?.users?.volunteers ?? 52)} label="Volunteers" />
           </View>
-          <TouchableOpacity style={styles.primaryButton} testID="sync-backup">
-            <Text style={styles.primaryButtonText}>Sync cloud backup</Text>
-          </TouchableOpacity>
+
+          <PrimaryButton label="Sync cloud backup" testID="sync-backup" />
         </View>
       </ScrollView>
     </View>
   );
 }
+
+/* ----------------------------- Small UI Helpers ---------------------------- */
+
+function SectionHeader({ title, icon }: { title: string; icon: React.ReactNode }) {
+  return (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {icon}
+    </View>
+  );
+}
+
+function PrimaryButton({
+  label,
+  testID,
+  disabled,
+}: {
+  label: string;
+  testID?: string;
+  disabled?: boolean;
+}) {
+  return (
+    <TouchableOpacity
+      style={[styles.primaryButton, disabled && styles.primaryButtonDisabled]}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      testID={testID}
+      disabled={disabled}
+    >
+      <Text style={[styles.primaryButtonText, disabled && styles.primaryButtonTextDisabled]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+function SecondaryButton({
+  label,
+  testID,
+}: {
+  label: string;
+  testID?: string;
+}) {
+  return (
+    <TouchableOpacity
+      style={styles.secondaryButton}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      testID={testID}
+    >
+      <Text style={styles.secondaryButtonText}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function AutomationRow({ title, meta }: { title: string; meta: string }) {
+  return (
+    <View style={styles.automationRow}>
+      <Text style={styles.automationTitle}>{title}</Text>
+      <Text style={styles.automationMeta}>{meta}</Text>
+    </View>
+  );
+}
+
+function UserTile({ value, label }: { value: string; label: string }) {
+  return (
+    <View style={styles.userTile}>
+      <Text style={styles.userTileValue}>{value}</Text>
+      <Text style={styles.userTileLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function EmptyRow({ text }: { text: string }) {
+  return (
+    <View style={styles.emptyRow}>
+      <Text style={styles.emptyText}>{text}</Text>
+    </View>
+  );
+}
+
+/* --------------------------------- Styles --------------------------------- */
 
 const styles = StyleSheet.create({
   screen: {
@@ -237,9 +370,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
   },
-  sectionCaption: {
-    color: Colors.ui.textSecondary,
-  },
   input: {
     borderRadius: 16,
     borderWidth: 1,
@@ -261,7 +391,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
   },
+  primaryButtonDisabled: {
+    opacity: 0.55,
+  },
   primaryButtonText: {
+    color: Colors.ui.background,
+    fontWeight: "700",
+  },
+  primaryButtonTextDisabled: {
     color: Colors.ui.background,
     fontWeight: "700",
   },
@@ -379,6 +516,8 @@ const styles = StyleSheet.create({
   paymentTitle: {
     color: Colors.ui.textPrimary,
     fontWeight: "600",
+    flex: 1,
+    paddingRight: 12,
   },
   paymentAmount: {
     color: Colors.ui.textPrimary,
@@ -403,5 +542,17 @@ const styles = StyleSheet.create({
   },
   userTileLabel: {
     color: Colors.ui.textSecondary,
+  },
+  emptyRow: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.ui.border,
+    padding: 14,
+    backgroundColor: Colors.ui.elevated,
+    alignItems: "center",
+  },
+  emptyText: {
+    color: Colors.ui.textSecondary,
+    fontSize: 13,
   },
 });
