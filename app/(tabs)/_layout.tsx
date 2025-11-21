@@ -1,5 +1,5 @@
 import { Redirect, Tabs } from "expo-router";
-import { Activity, BookOpen, CalendarDays, LayoutDashboard, Shield } from "lucide-react-native";
+import { CalendarDays, LayoutDashboard, Shield } from "lucide-react-native";
 import React from "react";
 import { Platform } from "react-native";
 
@@ -61,22 +61,6 @@ export default function TabLayout() {
         options={{
           title: "Events",
           tabBarIcon: ({ color }) => <CalendarDays color={color} size={24} />,
-          headerShown: false,
-        }}
-      />
-      <Tabs.Screen
-        name="learning"
-        options={{
-          title: "Learning",
-          tabBarIcon: ({ color }) => <BookOpen color={color} size={24} />,
-          headerShown: false,
-        }}
-      />
-      <Tabs.Screen
-        name="impact"
-        options={{
-          title: "Impact",
-          tabBarIcon: ({ color }) => <Activity color={color} size={24} />,
           headerShown: false,
         }}
       />
