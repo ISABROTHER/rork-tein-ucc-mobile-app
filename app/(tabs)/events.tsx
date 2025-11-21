@@ -19,6 +19,8 @@ export default function EventsScreen() {
     [events, selectedEvent]
   );
 
+  const hasEvents = events.length > 0;
+
   // Safe analytics fallbacks
   const attendanceTotal = analytics?.attendance?.total ?? 0;
   const attendanceNewcomers = analytics?.attendance?.newcomers ?? 0;
@@ -26,8 +28,6 @@ export default function EventsScreen() {
 
   const returningPercent =
     attendanceTotal > 0 ? Math.round((attendanceReturning / attendanceTotal) * 100) : 0;
-
-  const hasEvents = events.length > 0;
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -44,38 +44,43 @@ export default function EventsScreen() {
           RSVP, attendance, QR check-in and engagement insights
         </Text>
 
-        {/* Event selector carousel */}
+        {/* Mobile-first vertical list selector */}
         {!hasEvents ? (
           <EmptyBlock text="No events yet. Executives can create events from Admin." />
         ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
+          <View style={styles.verticalList}>
             {events.map((event) => {
               const isActive = selectedEvent === event.id;
               return (
                 <TouchableOpacity
                   key={event.id}
-                  style={[styles.eventChip, isActive && styles.eventChipActive]}
+                  style={[styles.eventTile, isActive && styles.eventTileActive]}
                   onPress={() => setSelectedEvent(event.id)}
-                  testID={`event-chip-${event.id}`}
+                  testID={`event-tile-${event.id}`}
                   accessibilityRole="button"
                   accessibilityLabel={`Select event ${event.title}`}
                 >
-                  <Text
-                    style={[styles.eventChipLabel, isActive && styles.eventChipLabelActive]}
-                    numberOfLines={1}
-                  >
-                    {event.title}
-                  </Text>
-                  <Text
-                    style={[styles.eventChipMeta, isActive && styles.eventChipMetaActive]}
-                    numberOfLines={1}
-                  >
-                    {event.date}
-                  </Text>
+                  <View style={{ flex: 1, paddingRight: 12 }}>
+                    <Text
+                      style={[styles.eventTileTitle, isActive && styles.eventTileTitleActive]}
+                      numberOfLines={1}
+                    >
+                      {event.title}
+                    </Text>
+                    <Text
+                      style={[styles.eventTileMeta, isActive && styles.eventTileMetaActive]}
+                      numberOfLines={1}
+                    >
+                      {event.date} • {event.time} • {event.venue}
+                    </Text>
+                  </View>
+
+                  {/* Small live status dot */}
+                  <View style={[styles.dot, isActive && styles.dotActive]} />
                 </TouchableOpacity>
               );
             })}
-          </ScrollView>
+          </View>
         )}
 
         {/* Active event banner */}
@@ -137,7 +142,7 @@ export default function EventsScreen() {
           </ImageBackground>
         )}
 
-        {/* Analytics (faculty breakdown removed) */}
+        {/* Analytics */}
         <View style={styles.analyticsPanel}>
           <Text style={styles.sectionTitle}>Event Intelligence</Text>
 
@@ -208,7 +213,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 16,
     paddingBottom: 80,
-    gap: 24,
+    gap: 20,
   },
   pageTitle: {
     color: Colors.ui.textPrimary,
@@ -219,40 +224,57 @@ const styles = StyleSheet.create({
   pageSubtitle: {
     color: Colors.ui.textSecondary,
   },
-  carousel: {
+
+  /* Vertical list selector */
+  verticalList: {
+    gap: 12,
     marginTop: 12,
   },
-  eventChip: {
-    padding: 14,
-    borderRadius: 18,
+  eventTile: {
+    padding: 16,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: Colors.ui.border,
-    marginRight: 12,
     backgroundColor: Colors.ui.surface,
-    minWidth: 150,
+    flexDirection: "row",
+    alignItems: "center",
   },
-  eventChipActive: {
-    backgroundColor: Colors.palette.crimson,
-    borderColor: Colors.palette.crimson,
+  eventTileActive: {
+    borderColor: Colors.palette.jade,
+    backgroundColor: Colors.ui.elevated,
   },
-  eventChipLabel: {
+  eventTileTitle: {
     color: Colors.ui.textPrimary,
     fontWeight: "700",
+    fontSize: 16,
   },
-  eventChipLabelActive: {
-    color: Colors.palette.ivory,
+  eventTileTitleActive: {
+    color: Colors.palette.jade,
   },
-  eventChipMeta: {
+  eventTileMeta: {
     color: Colors.ui.textSecondary,
+    marginTop: 3,
+    fontSize: 13,
   },
-  eventChipMetaActive: {
-    color: Colors.palette.ivory,
+  eventTileMetaActive: {
+    color: Colors.palette.jade,
     opacity: 0.9,
   },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 10,
+    backgroundColor: Colors.ui.border,
+  },
+  dotActive: {
+    backgroundColor: Colors.palette.jade,
+  },
+
   banner: {
     height: 320,
     borderRadius: 32,
     overflow: "hidden",
+    marginTop: 8,
   },
   bannerImage: {
     borderRadius: 32,
@@ -280,6 +302,7 @@ const styles = StyleSheet.create({
     color: Colors.palette.ivory,
     fontSize: 15,
   },
+
   rsvpRow: {
     flexDirection: "row",
     gap: 12,
@@ -306,6 +329,7 @@ const styles = StyleSheet.create({
     color: Colors.ui.background,
     fontWeight: "800",
   },
+
   attendanceCard: {
     backgroundColor: "rgba(0,0,0,0.35)",
     borderRadius: 18,
@@ -326,6 +350,7 @@ const styles = StyleSheet.create({
     color: Colors.palette.ivory,
     opacity: 0.8,
   },
+
   analyticsPanel: {
     backgroundColor: Colors.ui.surface,
     borderRadius: 28,
@@ -333,6 +358,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.ui.border,
     gap: 16,
+    marginTop: 4,
   },
   sectionTitle: {
     color: Colors.ui.textPrimary,
@@ -363,6 +389,7 @@ const styles = StyleSheet.create({
   analyticsMeta: {
     color: Colors.ui.textSecondary,
   },
+
   recapPanel: {
     backgroundColor: Colors.ui.surface,
     borderRadius: 24,
@@ -408,6 +435,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: "center",
   },
+
   emptyBlock: {
     width: "100%",
     padding: 16,
