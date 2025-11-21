@@ -47,7 +47,8 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const fullName = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() || "Member";
+  const fullName =
+    `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() || "Member";
   const roleColor = Colors.roles?.[profile?.role] ?? Colors.ui.elevated;
   const duesStatus = profile?.duesStatus ?? "unpaid";
 
@@ -72,14 +73,22 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
         testID="dashboard-scroll"
       >
-        {/* -------------------------------- HERO (TOP 1% CONTRAST) ------------------------------- */}
+        {/* --------------------------- HERO (APPLE STYLE) --------------------------- */}
         <View style={styles.heroCard}>
           <LinearGradient
             colors={Colors.gradients.hero as [string, string, string]}
             style={styles.heroGradient}
           >
-            {/* Premium dark veil to force readability */}
-            <View style={styles.heroVeil} />
+            {/* Apple-style dark scrim gradient overlay */}
+            <LinearGradient
+              colors={[
+                "rgba(0,0,0,0.60)",
+                "rgba(0,0,0,0.32)",
+                "rgba(0,0,0,0.55)",
+              ]}
+              locations={[0, 0.5, 1]}
+              style={styles.heroScrim}
+            />
 
             <View style={styles.heroHeader}>
               <View style={{ flex: 1, paddingRight: 12 }}>
@@ -108,7 +117,7 @@ export default function DashboardScreen() {
                   {profile?.membershipId ?? "—"}
                 </Text>
 
-                <Text style={[styles.metaLabel, { marginTop: 6 }]}>Dues Status</Text>
+                <Text style={[styles.metaLabel, { marginTop: 8 }]}>Dues Status</Text>
                 <Text
                   style={[
                     styles.metaValue,
@@ -119,7 +128,7 @@ export default function DashboardScreen() {
                   {duesStatus.toUpperCase()}
                 </Text>
 
-                <Text style={[styles.metaLabel, { marginTop: 6 }]}>Points</Text>
+                <Text style={[styles.metaLabel, { marginTop: 8 }]}>Points</Text>
                 <Text style={styles.pointsValue} numberOfLines={1}>
                   {profile?.points ?? 0}
                 </Text>
@@ -156,10 +165,12 @@ export default function DashboardScreen() {
             <View style={styles.quickIconWrap}>
               <Bot color={Colors.palette.crimson} />
             </View>
+
             <View style={styles.quickTextWrap}>
               <Text style={styles.quickTitle}>Ask TEIN AI</Text>
               <Text style={styles.quickSubtitle}>Policy explainers in 30s</Text>
             </View>
+
             <View style={styles.roundButton}>
               <ArrowRight color={Colors.ui.textPrimary} size={18} />
             </View>
@@ -169,12 +180,14 @@ export default function DashboardScreen() {
             <View style={styles.quickIconWrap}>
               <CreditCard color={Colors.palette.crimson} />
             </View>
+
             <View style={styles.quickTextWrap}>
               <Text style={styles.quickTitle}>Pay Dues</Text>
               <Text style={styles.quickSubtitle}>
                 {firstPayment?.amount ?? "—"} settled
               </Text>
             </View>
+
             <View style={styles.roundButton}>
               <Sparkles color={Colors.ui.textPrimary} size={18} />
             </View>
@@ -355,11 +368,8 @@ const styles = StyleSheet.create({
     gap: 8,
     position: "relative",
   },
-
-  // NEW: Premium dark veil for contrast
-  heroVeil: {
+  heroScrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.35)",
   },
 
   heroHeader: {
@@ -380,14 +390,14 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "900",
     marginTop: 4,
-    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowColor: "rgba(0,0,0,0.7)",
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 6,
+    textShadowRadius: 8,
   },
   heroSub: {
-    color: Colors.palette.ivory,
+    color: "rgba(255,255,255,0.92)",
     fontSize: 14,
-    opacity: 0.92,
+    fontWeight: "600",
     marginTop: 2,
   },
 
@@ -396,7 +406,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.28)",
+    borderColor: "rgba(255,255,255,0.30)",
     zIndex: 2,
   },
   roleChipText: {
@@ -419,8 +429,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   metaLabel: {
-    color: Colors.palette.ivory,
-    opacity: 0.85,
+    color: "rgba(255,255,255,0.78)",
     fontSize: 12,
     fontWeight: "700",
   },
@@ -445,11 +454,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 4,
-    backgroundColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(255,255,255,0.14)",
     padding: 8,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
+    borderColor: "rgba(255,255,255,0.20)",
     zIndex: 2,
   },
   qrPixel: {
@@ -470,8 +479,7 @@ const styles = StyleSheet.create({
   },
   footerCol: { flex: 1, paddingRight: 8 },
   footerLabel: {
-    color: Colors.palette.ivory,
-    opacity: 0.85,
+    color: "rgba(255,255,255,0.78)",
     fontSize: 12,
     fontWeight: "700",
   },
@@ -615,15 +623,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "800",
   },
-  opportunityOrg: {
-    color: Colors.ui.textSecondary,
-    fontSize: 13,
-  },
+  opportunityOrg: { color: Colors.ui.textSecondary, fontSize: 13 },
   opportunityHighlights: { gap: 4, marginTop: 6 },
-  opportunityHighlight: {
-    color: Colors.ui.textSecondary,
-    fontSize: 13,
-  },
+  opportunityHighlight: { color: Colors.ui.textSecondary, fontSize: 13 },
   opportunityDeadline: {
     color: Colors.ui.textPrimary,
     fontWeight: "700",
@@ -641,16 +643,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.ui.border,
     gap: 6,
   },
-  statLabel: {
-    color: Colors.ui.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  statValue: {
-    color: Colors.ui.textPrimary,
-    fontSize: 28,
-    fontWeight: "900",
-  },
+  statLabel: { color: Colors.ui.textSecondary, fontSize: 12, fontWeight: "700" },
+  statValue: { color: Colors.ui.textPrimary, fontSize: 28, fontWeight: "900" },
   statSub: { color: Colors.ui.textSecondary, fontSize: 12 },
 
   /* MEDIA */
@@ -673,16 +667,8 @@ const styles = StyleSheet.create({
   },
   mediaImage: { width: "100%", height: 112 },
   mediaBody: { padding: 12, gap: 4 },
-  mediaTitle: {
-    color: Colors.ui.textPrimary,
-    fontSize: 14,
-    fontWeight: "800",
-  },
-  mediaMeta: {
-    color: Colors.ui.textSecondary,
-    fontSize: 12,
-    lineHeight: 17,
-  },
+  mediaTitle: { color: Colors.ui.textPrimary, fontSize: 14, fontWeight: "800" },
+  mediaMeta: { color: Colors.ui.textSecondary, fontSize: 12, lineHeight: 17 },
 
   /* EMPTY */
   emptyBlock: {
