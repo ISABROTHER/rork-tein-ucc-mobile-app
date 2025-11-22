@@ -16,6 +16,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAppState } from "@/contexts/app-state";
 
+import { handleClick } from "@/lib";
+
 /* ----------------------------- QR Badge (Safe) ---------------------------- */
 
 function QrBadge({ seed }: { seed: string }) {
@@ -176,20 +178,22 @@ export default function DashboardScreen() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.quickCard}>
-            <View style={styles.quickIconWrap}>
-              <CreditCard color={Colors.palette.crimson} />
+          {/* Example of using a click function */}
+          <TouchableOpacity 
+            style={styles.quickCard}
+            onPress={() => {
+              // calling the function from lib
+              handleClick();
+              alert("Click function executed!");
+            }}
+          >
+             <View style={styles.quickIconWrap}>
+              <Sparkles color={Colors.palette.crimson} />
             </View>
 
             <View style={styles.quickTextWrap}>
-              <Text style={styles.quickTitle}>Pay Dues</Text>
-              <Text style={styles.quickSubtitle}>
-                {firstPayment?.amount ?? "—"} settled
-              </Text>
-            </View>
-
-            <View style={styles.roundButton}>
-              <Sparkles color={Colors.ui.textPrimary} size={18} />
+              <Text style={styles.quickTitle}>Test Click</Text>
+              <Text style={styles.quickSubtitle}>Check console logs</Text>
             </View>
           </TouchableOpacity>
         </View>
