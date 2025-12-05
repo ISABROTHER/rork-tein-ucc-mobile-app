@@ -1,9 +1,15 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { ArrowRight, Bot, CreditCard, Sparkles } from "lucide-react-native";
+import { 
+  Award, 
+  CircleUser, 
+  HardHat, 
+  HeartHandshake, 
+  MessageSquareWarning, 
+  ScrollText 
+} from "lucide-react-native";
 import React, { useMemo } from "react";
 import {
-  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -15,8 +21,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/constants/colors";
 import { useAppState } from "@/contexts/app-state";
-
-import { handleClick } from "@/lib";
 
 /* ----------------------------- QR Badge (Safe) ---------------------------- */
 
@@ -44,8 +48,7 @@ function QrBadge({ seed }: { seed: string }) {
 /* -------------------------------- Screen --------------------------------- */
 
 export default function DashboardScreen() {
-  const { profile, feed, todayQrSeed, payments, opportunities, analytics, media } =
-    useAppState();
+  const { profile, todayQrSeed } = useAppState();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -54,15 +57,63 @@ export default function DashboardScreen() {
   const roleColor = Colors.roles?.[profile?.role] ?? Colors.ui.elevated;
   const duesStatus = profile?.duesStatus ?? "unpaid";
 
-  const firstPayment = payments?.[0];
-  const announcements = feed ?? [];
-  const opps = opportunities ?? [];
-  const mediaItems = media ?? [];
-
-  const attendanceTotal = analytics?.attendance?.total ?? 0;
-  const attendanceReturning = analytics?.attendance?.returning ?? 0;
-  const attendanceNew = analytics?.attendance?.newcomers ?? 0;
-  const taskCompletion = analytics?.taskCompletion ?? 0;
+  // Menu Configuration based on your image
+  const menuItems = [
+    {
+      id: "projects",
+      label: "Ongoing Projects",
+      sub: "Infrastructure",
+      icon: HardHat,
+      bg: "#FFF9C4", // Pastel Yellow
+      accent: "#F59E0B", // Darker Yellow/Orange
+      route: "/(tabs)/events", // Placeholder route
+    },
+    {
+      id: "report",
+      label: "Report Issue",
+      sub: "Fix problems",
+      icon: MessageSquareWarning,
+      bg: "#E0F2F1", // Pastel Mint
+      accent: "#00897B", // Teal
+      route: "/(tabs)/impact",
+    },
+    {
+      id: "policies",
+      label: "Policies",
+      sub: "The Agenda",
+      icon: ScrollText,
+      bg: "#E3F2FD", // Pastel Blue
+      accent: "#1E88E5", // Blue
+      route: "/(tabs)/learning",
+    },
+    {
+      id: "achievements",
+      label: "Achievements",
+      sub: "Track record",
+      icon: Award,
+      bg: "#F3E5F5", // Pastel Purple
+      accent: "#8E24AA", // Purple
+      route: "/(tabs)/dashboard", // Placeholder
+    },
+    {
+      id: "support",
+      label: "Support",
+      sub: "Join us",
+      icon: HeartHandshake,
+      bg: "#FFEBEE", // Pastel Pink
+      accent: "#E53935", // Red/Pink
+      route: "/(tabs)/dashboard", // Placeholder
+    },
+    {
+      id: "appointment",
+      label: "Appointment & A...",
+      sub: "Book/Apply",
+      icon: CircleUser,
+      bg: "#F5F5F5", // Light Gray
+      accent: "#546E7A", // Blue Grey
+      route: "/(tabs)/dashboard", // Placeholder
+    },
+  ];
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -138,209 +189,35 @@ export default function DashboardScreen() {
 
               <QrBadge seed={todayQrSeed ?? ""} />
             </View>
-
-            <View style={styles.cardFooter}>
-              <View style={styles.footerCol}>
-                <Text style={styles.footerLabel}>Volunteer Hours</Text>
-                <Text style={styles.footerValue} numberOfLines={1}>
-                  {profile?.volunteerHours ?? 0}h
-                </Text>
-              </View>
-
-              <View style={styles.footerCol}>
-                <Text style={styles.footerLabel}>Badges</Text>
-                <Text style={styles.footerValue} numberOfLines={1}>
-                  {(profile?.badges ?? []).join(" · ") || "None yet"}
-                </Text>
-              </View>
-            </View>
           </LinearGradient>
         </View>
 
-        {/* ------------------------------ QUICK ACTIONS ------------------------------ */}
-        <View style={styles.quickRow}>
-          <TouchableOpacity
-            style={styles.quickCard}
-            testID="assistant-entry"
-            onPress={() => router.push("/assistant" as any)}
-          >
-            <View style={styles.quickIconWrap}>
-              <Bot color={Colors.palette.crimson} />
-            </View>
-
-            <View style={styles.quickTextWrap}>
-              <Text style={styles.quickTitle}>Ask TEIN AI</Text>
-              <Text style={styles.quickSubtitle}>Policy explainers in 30s</Text>
-            </View>
-
-            <View style={styles.roundButton}>
-              <ArrowRight color={Colors.ui.textPrimary} size={18} />
-            </View>
-          </TouchableOpacity>
-
-          {/* Example of using a click function */}
-          <TouchableOpacity 
-            style={styles.quickCard}
-            onPress={() => {
-              // calling the function from lib
-              handleClick();
-              alert("Click function executed!");
-            }}
-          >
-             <View style={styles.quickIconWrap}>
-              <Sparkles color={Colors.palette.crimson} />
-            </View>
-
-            <View style={styles.quickTextWrap}>
-              <Text style={styles.quickTitle}>Test Click</Text>
-              <Text style={styles.quickSubtitle}>Check console logs</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* ------------------------------ ANNOUNCEMENTS ------------------------------ */}
-        <View style={styles.panel}>
-          <View style={styles.panelHeader}>
-            <Text style={styles.panelTitle}>Announcements</Text>
-            <Text style={styles.panelTag}>Personalized</Text>
-          </View>
-
-          {announcements.length === 0 ? (
-            <EmptyBlock text="No announcements yet. Check back soon." />
-          ) : (
-            announcements.map((item) => (
-              <View key={item.id} style={styles.feedCard}>
-                <View style={styles.feedHeader}>
-                  <Text style={styles.feedCategory}>
-                    {(item.category ?? "").toUpperCase()}
-                  </Text>
-                  <Text style={styles.feedTime}>{item.timestamp}</Text>
-                </View>
-
-                <Text style={styles.feedTitle} numberOfLines={2}>
-                  {item.title}
-                </Text>
-                <Text style={styles.feedSummary} numberOfLines={3}>
-                  {item.summary}
-                </Text>
-
-                <View style={styles.feedTagsRow}>
-                  {(item.facultyTags ?? []).map((tag) => (
-                    <View key={`${item.id}-${tag}`} style={styles.feedTag}>
-                      <Text style={styles.feedTagText}>{tag}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            ))
-          )}
-        </View>
-
-        {/* ------------------------------ OPPORTUNITIES ------------------------------ */}
-        <View style={styles.panel}>
-          <View style={styles.panelHeader}>
-            <Text style={styles.panelTitle}>Opportunities Engine</Text>
-            <Text style={styles.panelTag}>Updated realtime</Text>
-          </View>
-
-          {opps.length === 0 ? (
-            <EmptyBlock text="No opportunities available right now." />
-          ) : (
-            <ScrollView
-              horizontal
-              pagingEnabled
-              snapToAlignment="start"
-              decelerationRate="fast"
-              showsHorizontalScrollIndicator={false}
-              style={styles.opportunityScroll}
-              contentContainerStyle={{ paddingHorizontal: 8 }}
+        {/* ------------------------------ GRID MENU ------------------------------ */}
+        <View style={styles.gridContainer}>
+          {menuItems.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.gridCard, { backgroundColor: item.bg }]}
+              onPress={() => router.push(item.route as any)}
+              activeOpacity={0.7}
             >
-              {opps.map((opp) => (
-                <View key={opp.id} style={styles.opportunityCard}>
-                  <Text style={styles.opportunityType}>
-                    {(opp.type ?? "").toUpperCase()}
-                  </Text>
-                  <Text style={styles.opportunityTitle} numberOfLines={2}>
-                    {opp.title}
-                  </Text>
-                  <Text style={styles.opportunityOrg} numberOfLines={1}>
-                    {opp.organization}
-                  </Text>
-
-                  <View style={styles.opportunityHighlights}>
-                    {(opp.highlights ?? []).slice(0, 3).map((highlight) => (
-                      <Text key={`${opp.id}-${highlight}`} style={styles.opportunityHighlight}>
-                        • {highlight}
-                      </Text>
-                    ))}
-                  </View>
-
-                  <Text style={styles.opportunityDeadline}>
-                    Deadline: {opp.deadline}
-                  </Text>
-                </View>
-              ))}
-            </ScrollView>
-          )}
+              <View style={styles.iconContainer}>
+                <item.icon color={item.accent} size={32} strokeWidth={2} />
+              </View>
+              
+              <View style={styles.textContainer}>
+                <Text style={[styles.cardTitle, { color: Colors.ui.textPrimary }]}>
+                  {item.label}
+                </Text>
+                <Text style={[styles.cardSub, { color: Colors.ui.textSecondary }]}>
+                  {item.sub}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* ------------------------------ ANALYTICS ------------------------------ */}
-        <View style={styles.analyticsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Attendance</Text>
-            <Text style={styles.statValue}>{attendanceTotal}</Text>
-            <Text style={styles.statSub} numberOfLines={1}>
-              Returning {attendanceReturning} · New {attendanceNew}
-            </Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Task Completion</Text>
-            <Text style={styles.statValue}>{taskCompletion}%</Text>
-            <Text style={styles.statSub} numberOfLines={1}>
-              Volunteer hub
-            </Text>
-          </View>
-        </View>
-
-        {/* ------------------------------ MEDIA HUB ------------------------------ */}
-        <View style={styles.mediaPanel}>
-          <View style={styles.panelHeader}>
-            <Text style={styles.panelTitle}>Media Hub</Text>
-            <Text style={styles.panelTag}>Shareable</Text>
-          </View>
-
-          {mediaItems.length === 0 ? (
-            <EmptyBlock text="Media uploads will appear here." />
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {mediaItems.map((item) => (
-                <View key={item.id} style={styles.mediaCard}>
-                  <Image source={{ uri: item.thumbnail }} style={styles.mediaImage} />
-                  <View style={styles.mediaBody}>
-                    <Text style={styles.mediaTitle} numberOfLines={1}>
-                      {item.title}
-                    </Text>
-                    <Text style={styles.mediaMeta} numberOfLines={2}>
-                      {item.type} · {item.description}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </ScrollView>
-          )}
-        </View>
       </ScrollView>
-    </View>
-  );
-}
-
-/* ----------------------------- Small UI Helper ---------------------------- */
-
-function EmptyBlock({ text }: { text: string }) {
-  return (
-    <View style={styles.emptyBlock}>
-      <Text style={styles.emptyBlockText}>{text}</Text>
     </View>
   );
 }
@@ -475,217 +352,43 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.palette.ivory,
   },
 
-  cardFooter: {
+  /* GRID MENU */
+  gridContainer: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
-    marginTop: 16,
-    zIndex: 2,
+    gap: 12,
   },
-  footerCol: { flex: 1, paddingRight: 8 },
-  footerLabel: {
-    color: "rgba(255,255,255,0.78)",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  footerValue: {
-    color: Colors.palette.ivory,
-    fontSize: 15,
-    fontWeight: "800",
-    marginTop: 3,
-  },
-
-  /* QUICK ACTIONS */
-  quickRow: { flexDirection: "row", gap: 12 },
-  quickCard: {
-    flex: 1,
-    backgroundColor: Colors.ui.surface,
-    padding: 14,
-    borderRadius: 20,
-    borderColor: Colors.ui.border,
-    borderWidth: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  quickIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: Colors.ui.elevated,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.ui.border,
-  },
-  quickTextWrap: { flex: 1 },
-  quickTitle: {
-    color: Colors.ui.textPrimary,
-    fontWeight: "800",
-    fontSize: 15,
-  },
-  quickSubtitle: {
-    color: Colors.ui.textSecondary,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  roundButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: Colors.ui.elevated,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.ui.border,
-  },
-
-  /* PANELS */
-  panel: {
-    backgroundColor: Colors.ui.surface,
+  gridCard: {
+    width: "48%", // Roughly 2 columns
+    aspectRatio: 1.1, // Makes them slightly taller squares
     borderRadius: 24,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: Colors.ui.border,
-    gap: 14,
-  },
-  panelHeader: {
-    flexDirection: "row",
+    padding: 16,
     justifyContent: "space-between",
-    alignItems: "center",
+    // Subtle shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  panelTitle: {
-    color: Colors.ui.textPrimary,
-    fontSize: 18,
-    fontWeight: "800",
-  },
-  panelTag: {
-    color: Colors.palette.ocean,
-    fontWeight: "700",
-    fontSize: 12,
-  },
-
-  /* FEED */
-  feedCard: {
-    borderWidth: 1,
-    borderColor: Colors.ui.border,
-    borderRadius: 18,
-    padding: 14,
-    gap: 8,
-    backgroundColor: Colors.ui.elevated,
-  },
-  feedHeader: { flexDirection: "row", justifyContent: "space-between" },
-  feedCategory: {
-    color: Colors.ui.textSecondary,
-    fontSize: 11,
-    letterSpacing: 1,
-    fontWeight: "800",
-  },
-  feedTime: { color: Colors.ui.textSecondary, fontSize: 11 },
-  feedTitle: {
-    color: Colors.ui.textPrimary,
-    fontSize: 16,
-    fontWeight: "800",
-  },
-  feedSummary: {
-    color: Colors.ui.textSecondary,
-    fontSize: 14,
-    lineHeight: 19,
-  },
-  feedTagsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  feedTag: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: Colors.ui.border,
-  },
-  feedTagText: {
-    color: Colors.ui.textPrimary,
-    fontSize: 11,
-    fontWeight: "700",
-  },
-
-  /* OPPORTUNITIES */
-  opportunityScroll: { marginHorizontal: -8 },
-  opportunityCard: {
-    width: Platform.OS === "web" ? 400 : 290,
-    marginHorizontal: 8,
-    borderRadius: 22,
-    padding: 18,
-    backgroundColor: Colors.ui.elevated,
-    borderWidth: 1,
-    borderColor: Colors.ui.border,
-    gap: 8,
-  },
-  opportunityType: {
-    color: Colors.palette.ocean,
-    fontWeight: "800",
-    fontSize: 12,
-    letterSpacing: 0.6,
-  },
-  opportunityTitle: {
-    color: Colors.ui.textPrimary,
-    fontSize: 18,
-    fontWeight: "800",
-  },
-  opportunityOrg: { color: Colors.ui.textSecondary, fontSize: 13 },
-  opportunityHighlights: { gap: 4, marginTop: 6 },
-  opportunityHighlight: { color: Colors.ui.textSecondary, fontSize: 13 },
-  opportunityDeadline: {
-    color: Colors.ui.textPrimary,
-    fontWeight: "700",
-    marginTop: 4,
-  },
-
-  /* ANALYTICS */
-  analyticsRow: { flexDirection: "row", gap: 12 },
-  statCard: {
-    flex: 1,
-    backgroundColor: Colors.ui.surface,
-    borderRadius: 20,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.ui.border,
-    gap: 6,
-  },
-  statLabel: { color: Colors.ui.textSecondary, fontSize: 12, fontWeight: "700" },
-  statValue: { color: Colors.ui.textPrimary, fontSize: 28, fontWeight: "900" },
-  statSub: { color: Colors.ui.textSecondary, fontSize: 12 },
-
-  /* MEDIA */
-  mediaPanel: {
-    backgroundColor: Colors.ui.surface,
-    padding: 18,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: Colors.ui.border,
-    gap: 14,
-  },
-  mediaCard: {
-    width: 190,
-    marginRight: 14,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: Colors.ui.border,
-    overflow: "hidden",
-    backgroundColor: Colors.ui.elevated,
-  },
-  mediaImage: { width: "100%", height: 112 },
-  mediaBody: { padding: 12, gap: 4 },
-  mediaTitle: { color: Colors.ui.textPrimary, fontSize: 14, fontWeight: "800" },
-  mediaMeta: { color: Colors.ui.textSecondary, fontSize: 12, lineHeight: 17 },
-
-  /* EMPTY */
-  emptyBlock: {
+  iconContainer: {
+    alignSelf: "flex-start",
+    padding: 8,
+    backgroundColor: "rgba(255,255,255,0.6)",
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.ui.border,
-    backgroundColor: Colors.ui.elevated,
-    padding: 14,
-    alignItems: "center",
   },
-  emptyBlockText: {
-    color: Colors.ui.textSecondary,
-    fontSize: 13,
-    textAlign: "center",
+  textContainer: {
+    gap: 4,
+  },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    lineHeight: 20,
+  },
+  cardSub: {
+    fontSize: 11,
+    fontWeight: "600",
+    opacity: 0.7,
   },
 });

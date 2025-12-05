@@ -14,19 +14,17 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.rork.tein.ucc"
+      "supportsTablet": false,
+      "bundleIdentifier": "app.rork.tein-ucc-mobile-app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.rork.tein.ucc"
+      "package": "app.rork.tein_ucc_mobile_app"
     },
     "web": {
-      "bundler": "metro",
-      "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -41,10 +39,6 @@
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "extra": {
-      "supabaseUrl": "YOUR_SUPABASE_URL",
-      "supabaseAnonKey": "YOUR_SUPABASE_ANON_KEY"
     }
   }
 }
