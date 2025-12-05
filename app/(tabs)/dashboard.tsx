@@ -1,12 +1,15 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { 
-  Award, 
-  CircleUser, 
-  HardHat, 
-  HeartHandshake, 
-  MessageSquareWarning, 
-  ScrollText 
+import {
+  Award,
+  CircleUser,
+  HardHat,
+  HeartHandshake,
+  MessageSquareWarning,
+  ScrollText,
+  Bot,
+  ArrowRight,
+  Sparkles
 } from "lucide-react-native";
 import React, { useMemo } from "react";
 import {
@@ -16,6 +19,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Dimensions
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -57,23 +61,23 @@ export default function DashboardScreen() {
   const roleColor = Colors.roles?.[profile?.role] ?? Colors.ui.elevated;
   const duesStatus = profile?.duesStatus ?? "unpaid";
 
-  // Menu Configuration based on your image
+  // Premium Grid Configuration
   const menuItems = [
     {
       id: "projects",
       label: "Ongoing Projects",
       sub: "Infrastructure",
       icon: HardHat,
-      bg: "#FFF9C4", // Pastel Yellow
-      accent: "#F59E0B", // Darker Yellow/Orange
-      route: "/(tabs)/events", // Placeholder route
+      colors: ["#FFFDE7", "#FFF9C4"], // Gradient from light to base pastel
+      accent: "#FBC02D", // Darker Yellow
+      route: "/(tabs)/events", 
     },
     {
       id: "report",
       label: "Report Issue",
       sub: "Fix problems",
       icon: MessageSquareWarning,
-      bg: "#E0F2F1", // Pastel Mint
+      colors: ["#E0F2F1", "#B2DFDB"],
       accent: "#00897B", // Teal
       route: "/(tabs)/impact",
     },
@@ -82,7 +86,7 @@ export default function DashboardScreen() {
       label: "Policies",
       sub: "The Agenda",
       icon: ScrollText,
-      bg: "#E3F2FD", // Pastel Blue
+      colors: ["#E3F2FD", "#BBDEFB"],
       accent: "#1E88E5", // Blue
       route: "/(tabs)/learning",
     },
@@ -91,27 +95,27 @@ export default function DashboardScreen() {
       label: "Achievements",
       sub: "Track record",
       icon: Award,
-      bg: "#F3E5F5", // Pastel Purple
+      colors: ["#F3E5F5", "#E1BEE7"],
       accent: "#8E24AA", // Purple
-      route: "/(tabs)/dashboard", // Placeholder
+      route: "/(tabs)/dashboard", 
     },
     {
       id: "support",
       label: "Support",
       sub: "Join us",
       icon: HeartHandshake,
-      bg: "#FFEBEE", // Pastel Pink
-      accent: "#E53935", // Red/Pink
-      route: "/(tabs)/dashboard", // Placeholder
+      colors: ["#FFEBEE", "#FFCDD2"],
+      accent: "#E53935", // Red
+      route: "/(tabs)/dashboard", 
     },
     {
       id: "appointment",
-      label: "Appointment & A...",
+      label: "Appointments",
       sub: "Book/Apply",
       icon: CircleUser,
-      bg: "#F5F5F5", // Light Gray
+      colors: ["#FAFAFA", "#EEEEEE"],
       accent: "#546E7A", // Blue Grey
-      route: "/(tabs)/dashboard", // Placeholder
+      route: "/(tabs)/dashboard", 
     },
   ];
 
@@ -121,36 +125,31 @@ export default function DashboardScreen() {
         style={styles.container}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: 24, paddingBottom: Math.max(insets.bottom, 64) },
+          { paddingTop: 24, paddingBottom: Math.max(insets.bottom, 84) },
         ]}
         showsVerticalScrollIndicator={false}
         testID="dashboard-scroll"
       >
-        {/* --------------------------- HERO (APPLE STYLE) --------------------------- */}
+        {/* --------------------------- HERO CARD --------------------------- */}
         <View style={styles.heroCard}>
           <LinearGradient
             colors={Colors.gradients.hero as [string, string, string]}
             style={styles.heroGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
           >
-            {/* Apple-style dark scrim gradient overlay */}
+            {/* Dark Scrim for text readability */}
             <LinearGradient
-              colors={[
-                "rgba(0,0,0,0.60)",
-                "rgba(0,0,0,0.32)",
-                "rgba(0,0,0,0.55)",
-              ]}
-              locations={[0, 0.5, 1]}
-              style={styles.heroScrim}
+              colors={["rgba(0,0,0,0.6)", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.6)"]}
+              style={StyleSheet.absoluteFill}
             />
 
             <View style={styles.heroHeader}>
               <View style={{ flex: 1, paddingRight: 12 }}>
                 <Text style={styles.heroLabel}>TEIN UCC</Text>
-
                 <Text style={styles.heroTitle} numberOfLines={1}>
                   {fullName}
                 </Text>
-
                 <Text style={styles.heroSub} numberOfLines={1}>
                   Level {profile?.level ?? "-"} · {profile?.program ?? "Program"}
                 </Text>
@@ -165,26 +164,22 @@ export default function DashboardScreen() {
 
             <View style={styles.heroBody}>
               <View style={styles.heroMetaCol}>
-                <Text style={styles.metaLabel}>Membership ID</Text>
-                <Text style={styles.metaValue} numberOfLines={1}>
-                  {profile?.membershipId ?? "—"}
-                </Text>
+                <View style={styles.metaRow}>
+                  <Text style={styles.metaLabel}>ID</Text>
+                  <Text style={styles.metaValue}>{profile?.membershipId ?? "—"}</Text>
+                </View>
+                
+                <View style={styles.metaRow}>
+                  <Text style={styles.metaLabel}>Status</Text>
+                  <Text style={[styles.metaValue, duesStatus === "paid" ? styles.success : styles.warning]}>
+                    {duesStatus.toUpperCase()}
+                  </Text>
+                </View>
 
-                <Text style={[styles.metaLabel, { marginTop: 8 }]}>Dues Status</Text>
-                <Text
-                  style={[
-                    styles.metaValue,
-                    duesStatus === "paid" ? styles.success : styles.warning,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {duesStatus.toUpperCase()}
-                </Text>
-
-                <Text style={[styles.metaLabel, { marginTop: 8 }]}>Points</Text>
-                <Text style={styles.pointsValue} numberOfLines={1}>
-                  {profile?.points ?? 0}
-                </Text>
+                <View style={styles.pointsContainer}>
+                  <Text style={styles.pointsValue}>{profile?.points ?? 0}</Text>
+                  <Text style={styles.pointsLabel}>Points</Text>
+                </View>
               </View>
 
               <QrBadge seed={todayQrSeed ?? ""} />
@@ -192,27 +187,53 @@ export default function DashboardScreen() {
           </LinearGradient>
         </View>
 
-        {/* ------------------------------ GRID MENU ------------------------------ */}
+        {/* --------------------------- AI BANNER --------------------------- */}
+        <TouchableOpacity
+          style={styles.aiBanner}
+          onPress={() => router.push("/assistant" as any)}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={["#2F3136", "#1C1D24"]} // Dark sleek look
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.aiBannerGradient}
+          >
+            <View style={styles.aiIconCircle}>
+              <Sparkles color="#FFD700" size={20} fill="#FFD700" />
+            </View>
+            <View style={styles.aiTextContent}>
+              <Text style={styles.aiTitle}>Ask TEIN Assistant</Text>
+              <Text style={styles.aiSub}>Instant policy answers & guides</Text>
+            </View>
+            <ArrowRight color="#FFFFFF" size={20} style={{ opacity: 0.5 }} />
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* --------------------------- MAIN GRID --------------------------- */}
         <View style={styles.gridContainer}>
           {menuItems.map((item) => (
             <TouchableOpacity
               key={item.id}
-              style={[styles.gridCard, { backgroundColor: item.bg }]}
+              style={styles.gridCardWrapper}
               onPress={() => router.push(item.route as any)}
               activeOpacity={0.7}
             >
-              <View style={styles.iconContainer}>
-                <item.icon color={item.accent} size={32} strokeWidth={2} />
-              </View>
-              
-              <View style={styles.textContainer}>
-                <Text style={[styles.cardTitle, { color: Colors.ui.textPrimary }]}>
-                  {item.label}
-                </Text>
-                <Text style={[styles.cardSub, { color: Colors.ui.textSecondary }]}>
-                  {item.sub}
-                </Text>
-              </View>
+              <LinearGradient
+                colors={item.colors as [string, string]}
+                style={styles.gridCard}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,255,255,0.7)' }]}>
+                  <item.icon color={item.accent} size={28} strokeWidth={2.5} />
+                </View>
+                
+                <View style={styles.textContainer}>
+                  <Text style={styles.cardTitle}>{item.label}</Text>
+                  <Text style={styles.cardSub}>{item.sub}</Text>
+                </View>
+              </LinearGradient>
             </TouchableOpacity>
           ))}
         </View>
@@ -224,6 +245,10 @@ export default function DashboardScreen() {
 
 /* --------------------------------- Styles -------------------------------- */
 
+const { width } = Dimensions.get("window");
+const GRID_GAP = 12;
+const CARD_WIDTH = (width - 32 - GRID_GAP) / 2; // 32 is horizontal padding
+
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -233,123 +258,169 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 64,
-    gap: 24,
+    gap: 20,
   },
 
-  /* HERO */
+  /* HERO CARD - Apple Wallet Style */
   heroCard: {
     borderRadius: 24,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: Colors.ui.border,
+    borderColor: "rgba(0,0,0,0.05)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
   },
   heroGradient: {
-    padding: 22,
-    borderRadius: 24,
-    gap: 8,
-    position: "relative",
+    padding: 24,
+    minHeight: 200,
+    justifyContent: 'space-between',
   },
-  heroScrim: {
-    ...StyleSheet.absoluteFillObject,
-  },
-
   heroHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     zIndex: 2,
   },
   heroLabel: {
-    color: Colors.palette.ivory,
-    fontSize: 12,
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 11,
     fontWeight: "800",
-    letterSpacing: 1.4,
-    opacity: 0.95,
+    letterSpacing: 1.5,
+    marginBottom: 4,
+    textTransform: "uppercase",
   },
   heroTitle: {
-    color: Colors.palette.ivory,
-    fontSize: 26,
-    fontWeight: "900",
-    marginTop: 4,
-    textShadowColor: "rgba(0,0,0,0.7)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 8,
+    color: "#FFFFFF",
+    fontSize: 28,
+    fontWeight: "800",
+    letterSpacing: -0.5,
   },
   heroSub: {
-    color: "rgba(255,255,255,0.92)",
+    color: "rgba(255,255,255,0.9)",
     fontSize: 14,
     fontWeight: "600",
-    marginTop: 2,
+    marginTop: 4,
   },
-
   roleChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.30)",
-    zIndex: 2,
+    borderColor: "rgba(255,255,255,0.3)",
   },
   roleChipText: {
-    color: Colors.palette.ivory,
-    fontWeight: "900",
-    fontSize: 12,
-    letterSpacing: 0.7,
+    color: "#FFFFFF",
+    fontWeight: "800",
+    fontSize: 11,
+    letterSpacing: 0.5,
   },
-
   heroBody: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 18,
-    alignItems: "center",
-    gap: 16,
+    alignItems: "flex-end",
+    marginTop: 20,
     zIndex: 2,
   },
   heroMetaCol: {
-    flex: 1,
-    gap: 6,
+    gap: 12,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   metaLabel: {
-    color: "rgba(255,255,255,0.78)",
+    color: "rgba(255,255,255,0.6)",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "600",
+    width: 45,
   },
   metaValue: {
-    color: Colors.palette.ivory,
-    fontSize: 15,
-    fontWeight: "800",
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
   },
-  success: { color: Colors.ui.success },
-  warning: { color: Colors.ui.warning },
-
+  success: { color: "#4ADE80" },
+  warning: { color: "#FBBF24" },
+  
+  pointsContainer: {
+    marginTop: 8,
+  },
   pointsValue: {
-    color: Colors.palette.ivory,
-    fontSize: 34,
+    color: "#FFFFFF",
+    fontSize: 32,
     fontWeight: "900",
-    marginTop: -2,
+    lineHeight: 36,
+  },
+  pointsLabel: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 12,
+    fontWeight: "600",
   },
 
+  /* QR CODE */
   qrWrapper: {
-    width: 118,
-    height: 118,
+    width: 100,
+    height: 100,
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 4,
-    backgroundColor: "rgba(255,255,255,0.14)",
+    backgroundColor: "rgba(255,255,255,0.15)",
     padding: 8,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.20)",
-    zIndex: 2,
+    borderColor: "rgba(255,255,255,0.2)",
   },
   qrPixel: {
-    width: 16,
-    height: 16,
-    borderRadius: 4,
-    backgroundColor: "rgba(255,255,255,0.10)",
+    width: 13.6, // Adjusted for size
+    height: 13.6,
+    borderRadius: 3,
+    backgroundColor: "rgba(255,255,255,0.1)",
   },
   qrPixelActive: {
-    backgroundColor: Colors.palette.ivory,
+    backgroundColor: "#FFFFFF",
+  },
+
+  /* AI BANNER */
+  aiBanner: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: Colors.palette.jade,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  aiBannerGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+  },
+  aiIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  aiTextContent: {
+    flex: 1,
+  },
+  aiTitle: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  aiSub: {
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 13,
   },
 
   /* GRID MENU */
@@ -357,26 +428,35 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    gap: 12,
+    gap: GRID_GAP,
   },
-  gridCard: {
-    width: "48%", // Roughly 2 columns
-    aspectRatio: 1.1, // Makes them slightly taller squares
+  gridCardWrapper: {
+    width: CARD_WIDTH,
+    height: CARD_WIDTH * 0.85, // Slightly rectangular
     borderRadius: 24,
-    padding: 16,
-    justifyContent: "space-between",
-    // Subtle shadow
+    // Soft shadow for depth
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 2,
   },
+  gridCard: {
+    flex: 1,
+    borderRadius: 24,
+    padding: 16,
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.6)", // Glass border effect
+  },
   iconContainer: {
     alignSelf: "flex-start",
-    padding: 8,
-    backgroundColor: "rgba(255,255,255,0.6)",
+    padding: 10,
     borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
   textContainer: {
     gap: 4,
@@ -384,11 +464,13 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 15,
     fontWeight: "800",
-    lineHeight: 20,
+    color: "#1A1A1A", // Sharp black for contrast
+    letterSpacing: -0.3,
   },
   cardSub: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "600",
-    opacity: 0.7,
+    color: "#666666",
+    opacity: 0.9,
   },
 });
